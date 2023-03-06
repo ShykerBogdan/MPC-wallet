@@ -29,14 +29,16 @@ var AvmFujiConfig = AvmConfig{
 	ChainID:     fujiChainID,
 	AssetName:   "avax",
 	AssetID:     fujiAssetID,
-	RPCHostURL:  "https://api.avax-test.network/ext/bc/C/rpc",
+	RPCHostURL:  "https://api.avax-test.network:443",
+	//RPCHostURL:  "https://rpc.ankr.com/avalanche_fuji",
+	//RPCHostURL:  "https://api.avax-test.network/ext/bc/C/rpc",
 	ExplorerURL: "https://explorer.avax-test.network/tx/%s",
 }
 
 var mainnetChainID, _ = ids.FromString("2oYMBNV4eNHyqk2fjjV5nVQLDbtmNJzq5s3qs3Lo6ftnC6FByM") // mainnet X-chain
 var mainnetAssetID, _ = ids.FromString("FvwEAhmxKfeiG8SnEvq42hc6whRyY3EFYAvebMqDNDGCgxN5Z") // mainnet AVAX
 
-var AvmMainnetConfig = AvmConfig{
+var AvmMainnetConfig = ChainConfig{
 	Blockchain:  "avalanche",
 	NetworkName: "mainnet",
 	NetworkID:   1,

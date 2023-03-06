@@ -535,7 +535,7 @@ func (ui *UI) startEventHandler() {
 	refreshticker := time.NewTicker(time.Second)
 	defer refreshticker.Stop()
 
-	fetchticker := time.NewTicker(time.Second*30)
+	fetchticker := time.NewTicker(time.Second*130)
 	defer fetchticker.Stop()
 
 	for {
