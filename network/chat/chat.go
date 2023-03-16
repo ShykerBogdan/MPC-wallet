@@ -9,9 +9,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/johnthethird/thresher/config"
-	"github.com/johnthethird/thresher/protocols"
-	"github.com/johnthethird/thresher/user"
+	"github.com/shykerbogdan/mpc-wallet/config"
+	"github.com/shykerbogdan/mpc-wallet/protocols"
+	"github.com/shykerbogdan/mpc-wallet/user"
 
 	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/utils/crypto"
@@ -42,23 +42,23 @@ const (
 	// messageTypeProtocol is published when a new protocol message is contained within the chat message
 	messageTypeProtocol messageType = "chat.protocol"
 
-	messageTypeStartKeygen  messageType = "chat.startkeygen"
-	messageTypeStartSign    messageType = "chat.startsign"
-	messageTypeStartSendTx  messageType = "chat.startsendtx"
+	messageTypeStartKeygen messageType = "chat.startkeygen"
+	messageTypeStartSign   messageType = "chat.startsign"
+	messageTypeStartSendTx messageType = "chat.startsendtx"
 )
 
 // TODO Stuffing everything into one msg struct for now, better way?
-type chatmessage struct { 
-	Type       messageType            `json:"type"` // chat, command, protocol
-	SenderID   string                 `json:"senderid"`
-	SenderName string                 `json:"sendername"`
-	StartKeygen startkeygencmd        `json:"startkeygen,omitempty"`
-	StartSign   startsigncmd          `json:"startsign,omitempty"`
-	StartSendTx   startsendtxcmd      `json:"startsendtx,omitempty"`
-	UserMessage string                `json:"usermessage,omitempty"`
-	ProtocolMessage *protocol.Message `json:"protmessage,omitempty"`
-	AdvertiseMessage user.User        `json:"advmsg,omitempty"`
-	EventMessage string               `json:"evtmsg,omitempty"`
+type chatmessage struct {
+	Type             messageType       `json:"type"` // chat, command, protocol
+	SenderID         string            `json:"senderid"`
+	SenderName       string            `json:"sendername"`
+	StartKeygen      startkeygencmd    `json:"startkeygen,omitempty"`
+	StartSign        startsigncmd      `json:"startsign,omitempty"`
+	StartSendTx      startsendtxcmd    `json:"startsendtx,omitempty"`
+	UserMessage      string            `json:"usermessage,omitempty"`
+	ProtocolMessage  *protocol.Message `json:"protmessage,omitempty"`
+	AdvertiseMessage user.User         `json:"advmsg,omitempty"`
+	EventMessage     string            `json:"evtmsg,omitempty"`
 }
 
 type participant struct {
@@ -82,11 +82,11 @@ type startsigncmd struct {
 }
 
 type startsendtxcmd struct {
-	Name    string
-	Amount  uint64
+	Name     string
+	Amount   uint64
 	DestAddr string
-	Memo string
-	Signers []user.User
+	Memo     string
+	Signers  []user.User
 }
 
 // A structure that represents a chat log displayed locally and not published
@@ -99,8 +99,8 @@ const (
 )
 
 type chatlog struct {
-	level  logLevelType
-	msg    string
+	level logLevelType
+	msg   string
 }
 
 // A structure that represents a PubSub Chat Room
@@ -117,7 +117,7 @@ type ChatRoom struct {
 
 	cfg *config.AppConfig
 
-	peerid peer.ID
+	peerid       peer.ID
 	participants map[peer.ID]*participant
 
 	mutex sync.RWMutex
@@ -131,7 +131,6 @@ type ChatRoom struct {
 	// Represents the PubSub Subscription for the topic
 	psub *pubsub.Subscription
 }
-
 
 // A constructor function that generates and returns a new
 // ChatRoom for a given P2PHost, username and roomname
@@ -169,8 +168,8 @@ func JoinChatRoom(p2phost *P2P, cfg *config.AppConfig) (*ChatRoom, error) {
 		pstopic:  topic,
 		psub:     sub,
 
-		cfg: cfg,
-		peerid:   p2phost.Host.ID(),
+		cfg:          cfg,
+		peerid:       p2phost.Host.ID(),
 		participants: make(map[peer.ID]*participant),
 	}
 
@@ -241,7 +240,7 @@ func (cr *ChatRoom) SubLoop() {
 			}
 
 			switch cm.Type {
-			case messageTypeChatMessage:	
+			case messageTypeChatMessage:
 				cr.InboundChat <- *cm
 			case messageTypeStartKeygen:
 				if cr.doSignersIncludeMe(cm.StartKeygen.Signers) {
@@ -259,12 +258,12 @@ func (cr *ChatRoom) SubLoop() {
 				if cr.isProtocolMsgForMe(cm) {
 					cr.Logs <- chatlog{level: logLevelDebug, msg: fmt.Sprintf("Processing mpc-cmp protocol msg round %v...", cm.ProtocolMessage.RoundNumber)}
 					cr.InboundProtocol <- cm.ProtocolMessage
-				} 
+				}
 			case messageTypeAdvertise:
 				cr.AddParticipant(message.ReceivedFrom, cm.AdvertiseMessage)
 			default:
 				cr.Logs <- chatlog{level: logLevelInfo, msg: fmt.Sprintf("received unknown msg type %v", cm.Type)}
-		  }
+			}
 		}
 	}
 }
@@ -306,12 +305,11 @@ func (cr *ChatRoom) runProtocolSign(walletname string, msghash []byte, signers [
 		log.Fatalf("Error running signing protocol: %v", err)
 	}
 
-	
 	avasig, err := wallet.MpsSigToAvaSig(msghash, sig)
 	if err != nil {
 		log.Fatalf("Error recovering avasig: %v", err)
 	}
-	
+
 	return avasig
 }
 
@@ -333,7 +331,7 @@ func (cr *ChatRoom) runProtocolSendTx(walletname string, destaddr string, amount
 		cr.Logs <- chatlog{level: logLevelError, msg: fmt.Sprintf("Error parsing dest addr to id %s: %v", destaddr, err)}
 		return
 	}
-	
+
 	tx, err := w.CreateTx(w.Config.AssetID, amount, destid, memo)
 	if err != nil {
 		cr.Logs <- chatlog{level: logLevelError, msg: fmt.Sprintf("Error CreateTx %v", err)}
@@ -367,7 +365,7 @@ func (cr *ChatRoom) runProtocolSendTx(walletname string, destaddr string, amount
 		log.Fatalf("problem marshaling transaction: %v", err)
 	}
 
-	tx.Initialize(unsignedBytes, signedBytes)	
+	tx.Initialize(unsignedBytes, signedBytes)
 
 	txcb58, _ := formatting.EncodeWithChecksum(formatting.CB58, tx.Bytes())
 	log.Printf("txcb58: %v", txcb58)
@@ -382,7 +380,7 @@ func (cr *ChatRoom) runProtocolSendTx(walletname string, destaddr string, amount
 
 	result := w.ConfirmTx(txID)
 	url := w.FormatTxURL(txID)
-	
+
 	if result {
 		msg := fmt.Sprintf("[blue]🎉 Transaction Confirmed![-] %s", url)
 		cr.Logs <- chatlog{level: logLevelInfo, msg: msg}
@@ -403,11 +401,11 @@ func (cr *ChatRoom) AddParticipant(peerid peer.ID, u user.User) {
 	}
 
 	p := participant{
-		peerid: peerid, 
-		User: u,
+		peerid:   peerid,
+		User:     u,
 		verified: u.IsVerified(),
-		ttl: participantTTL,
-		addedAt: time.Now(),
+		ttl:      participantTTL,
+		addedAt:  time.Now(),
 	}
 
 	_, exists := cr.participants[peerid]
@@ -432,8 +430,8 @@ func (cr *ChatRoom) ParticipantList() []*participant {
 	defer cr.mutex.RUnlock()
 
 	arr := []*participant{}
-	for _, v := range cr.participants { 
-   arr = append(arr, v)
+	for _, v := range cr.participants {
+		arr = append(arr, v)
 	}
 
 	sort.Slice(arr, func(i, j int) bool {
@@ -475,7 +473,7 @@ func (cr *ChatRoom) refreshParticipantsLoop() {
 					continue
 				}
 
-				cr.Logs <- chatlog{level: logLevelInfo,  msg: fmt.Sprintf("%s has left the chat.", cr.participants[peerID].Nick)}
+				cr.Logs <- chatlog{level: logLevelInfo, msg: fmt.Sprintf("%s has left the chat.", cr.participants[peerID].Nick)}
 				// participant ttl expired
 				delete(cr.participants, peerID)
 			}

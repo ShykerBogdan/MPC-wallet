@@ -6,9 +6,9 @@ import (
 	"os"
 	"runtime/debug"
 
-	"github.com/johnthethird/thresher/commands"
-	"github.com/johnthethird/thresher/ulimit"
-	"github.com/johnthethird/thresher/version"
+	"github.com/shykerbogdan/mpc-wallet/commands"
+	"github.com/shykerbogdan/mpc-wallet/ulimit"
+	"github.com/shykerbogdan/mpc-wallet/version"
 )
 
 func panicHandler() {
@@ -29,7 +29,7 @@ func panicHandler() {
 }
 
 func main() {
-	defer panicHandler()	
+	defer panicHandler()
 
 	// The TUI requires lots of open files, so raise it here
 	if err := ulimit.Set(ulimit.DefaultFDLimit); err != nil {

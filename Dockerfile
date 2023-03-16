@@ -10,9 +10,9 @@ COPY . ./
 RUN go mod tidy
 
 
-# RUN go get "github.com/johnthethird/thresher/tree/master/commands"
-# RUN go get github.com/johnthethird/thresher/tree/master/ulimit
-# RUN go get github.com/johnthethird/thresher/tree/master/version
+# RUN go get "github.com/shykerbogdan/mpc-wallet/tree/master/commands"
+# RUN go get github.com/shykerbogdan/mpc-wallet/tree/master/ulimit
+# RUN go get github.com/shykerbogdan/mpc-wallet/tree/master/version
 
 # compile application
 RUN go build -o bin/thresher main.go

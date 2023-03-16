@@ -10,8 +10,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/johnthethird/thresher/user"
-	"github.com/johnthethird/thresher/wallet/avmwallet"
+	"github.com/shykerbogdan/mpc-wallet/user"
+	"github.com/shykerbogdan/mpc-wallet/wallet/avmwallet"
 )
 
 type AppConfig struct {
@@ -30,13 +30,13 @@ type AppConfig struct {
 	Me user.Me
 
 	// TODO Implement wallet types / factory for other chains (BTC, etc)
-	Wallets map[string]*avmwallet.Wallet 
+	Wallets map[string]*avmwallet.Wallet
 
 	UpdatedAt time.Time
 
 	filename string
 	isLoaded bool
-	mutex sync.Mutex
+	mutex    sync.Mutex
 }
 
 var errUnsupportedBlockchain = errors.New("Blockchain/Network is unsupported")
@@ -53,18 +53,17 @@ func New(blockchain string, network string, project string, nick string, address
 	}
 
 	cfg := &AppConfig{
-		Blockchain: blockchain, 
-		Network: network, 
-		Me: me, 
-		Project: project,
-		P2PNetwork: "chatnet", 
-		Wallets: make(map[string]*avmwallet.Wallet), 
-		isLoaded: false,
+		Blockchain: blockchain,
+		Network:    network,
+		Me:         me,
+		Project:    project,
+		P2PNetwork: "chatnet",
+		Wallets:    make(map[string]*avmwallet.Wallet),
+		isLoaded:   false,
 	}
 
 	return cfg, nil
 }
-
 
 // Initialize the AppConfig from a marshalled file on disk
 func Load(filename string) *AppConfig {
@@ -77,14 +76,14 @@ func Load(filename string) *AppConfig {
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Fatal error reading config file %s: %v \n", filename, err)
 		os.Exit(1)
-	}		
+	}
 
 	ac := &AppConfig{}
 	err = json.Unmarshal(jsonb, ac)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Fatal error loading config file %s: %v \n", filename, err)
 		os.Exit(1)
-	}		
+	}
 
 	ac.filename = filename
 	ac.isLoaded = true
@@ -174,7 +173,7 @@ func (ac *AppConfig) AddWallet(w *avmwallet.Wallet) error {
 
 func (ac *AppConfig) RenameWallet(oldName string, newName string) error {
 	ac.mutex.Lock()
-	
+
 	_, found := ac.Wallets[newName]
 	if found {
 		return errors.New("Cannot rename wallet, new name already exists")
@@ -195,8 +194,8 @@ func (ac *AppConfig) RenameWallet(oldName string, newName string) error {
 
 func (ac *AppConfig) SortedWalletNames() []string {
 	arr := []string{}
-	for _, v := range ac.Wallets { 
-   arr = append(arr, v.GetName())
+	for _, v := range ac.Wallets {
+		arr = append(arr, v.GetName())
 	}
 
 	sort.Slice(arr, func(i, j int) bool {

@@ -5,9 +5,9 @@ import (
 	"log"
 
 	"github.com/ava-labs/avalanchego/utils/formatting"
-	"github.com/johnthethird/thresher/network"
-	"github.com/johnthethird/thresher/user"
-	"github.com/johnthethird/thresher/wallet/avmwallet"
+	"github.com/shykerbogdan/mpc-wallet/network"
+	"github.com/shykerbogdan/mpc-wallet/user"
+	"github.com/shykerbogdan/mpc-wallet/wallet/avmwallet"
 	mpsecdsa "github.com/taurusgroup/multi-party-sig/pkg/ecdsa"
 	"github.com/taurusgroup/multi-party-sig/pkg/party"
 	"github.com/taurusgroup/multi-party-sig/pkg/pool"
@@ -17,7 +17,7 @@ import (
 
 func RunSign(w *avmwallet.Wallet, msghash []byte, signers []user.User, net network.Network) (*mpsecdsa.Signature, error) {
 	pl := pool.NewPool(0)
-	defer pl.TearDown()	
+	defer pl.TearDown()
 
 	partyIDs := party.IDSlice{}
 	for _, u := range signers {
@@ -69,4 +69,3 @@ func RunSign(w *avmwallet.Wallet, msghash []byte, signers []user.User, net netwo
 
 	return signature, nil
 }
-

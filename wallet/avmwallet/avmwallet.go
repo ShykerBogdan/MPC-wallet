@@ -11,8 +11,8 @@ import (
 
 	stdmath "math"
 
-	"github.com/johnthethird/thresher/constants"
-	"github.com/johnthethird/thresher/user"
+	"github.com/shykerbogdan/mpc-wallet/constants"
+	"github.com/shykerbogdan/mpc-wallet/user"
 
 	"github.com/ava-labs/avalanchego/codec"
 	"github.com/ava-labs/avalanchego/codec/linearcodec"
@@ -37,14 +37,14 @@ import (
 
 const (
 	codecVersion = 0
-	txFee = units.MilliAvax // default for Fuji and Mainnet
-	apiTimeout = "30s"
+	txFee        = units.MilliAvax // default for Fuji and Mainnet
+	apiTimeout   = "30s"
 )
 
 type Asset struct {
-	AssetID ids.ID
-	Name string
-	Symbol string
+	AssetID      ids.ID
+	Name         string
+	Symbol       string
 	Denomination uint8
 }
 
@@ -52,23 +52,23 @@ type Asset struct {
 // For now we use just one pub/priv key, maybe use BIP32 to enhance privacy?
 type Wallet struct {
 	// User-supplied name for this wallet
-	Name string
+	Name      string
 	Threshold int
-	Me user.User
-	Others []user.User
+	Me        user.User
+	Others    []user.User
 
 	// Raw config.Config struct we get from the MPS Keygen protocol
 	// This is a SECRET so figure out best way to protect it
 	KeyData []byte
 	// Public address computed from the MPS config and stored here so it shows up in the persisted JSON for reference
-	Address string 
+	Address string
 	// Config params for a blockchain, i.e. Avax Fuji, etc
-	Config constants.AvmConfig
-	
+	Config constants.ChainConfig
+
 	CreatedAt time.Time
 
 	// Mapping from utxoIDs to UTXOs
-	utxoSet  *UTXOSet              
+	utxoSet *UTXOSet
 
 	// For now we use just one pub/priv key, maybe use BIP32 to enhance privacy?
 	keychain *Keychain
@@ -77,47 +77,14 @@ type Wallet struct {
 	// Set of unique asset ids contained in the utxos
 	assets map[ids.ID]Asset
 
-	txFee   uint64
+	txFee uint64
 
 	// txs []*avm.Tx
 
 	isFetching bool
-	codec codec.Manager
-	clock timer.Clock
-	mutex sync.Mutex
-
-}
-
-// var _ wallet.Wallet = &Wallet{}
-
-func New() *Wallet {
-	c := linearcodec.NewDefault()
-	m := codec.NewDefaultManager()
-	errs := wrappers.Errs{}
-	errs.Add(
-		c.RegisterType(&avm.BaseTx{}),
-		c.RegisterType(&avm.CreateAssetTx{}),
-		c.RegisterType(&avm.OperationTx{}),
-		c.RegisterType(&avm.ImportTx{}),
-		c.RegisterType(&avm.ExportTx{}),
-		c.RegisterType(&secp256k1fx.TransferInput{}),
-		c.RegisterType(&secp256k1fx.MintOutput{}),
-		c.RegisterType(&secp256k1fx.TransferOutput{}),
-		c.RegisterType(&secp256k1fx.MintOperation{}),
-		c.RegisterType(&secp256k1fx.Credential{}),
-		m.RegisterCodec(codecVersion, c),
-	)
-
-	w := &Wallet{
-		codec:     m,
-		keychain:  NewKeychain(),
-		utxoSet:   &UTXOSet{},
-		balance:   map[ids.ID]uint64{},
-		assets:    map[ids.ID]Asset{},
-		txFee:     txFee,
-	}
-
-	return w
+	codec      codec.Manager
+	clock      timer.Clock
+	mutex      sync.Mutex
 }
 
 // NewWallet returns a new Avalanche Wallet
@@ -129,13 +96,14 @@ func NewEmptyWallet(network string, name string, threshold int, me user.User, ot
 		Others:    others,
 		CreatedAt: time.Now().UTC(),
 		keychain:  NewKeychain(),
-		utxoSet:   &UTXOSet{},
 		balance:   map[ids.ID]uint64{},
 		assets:    map[ids.ID]Asset{},
 		txFee:     txFee,
 	}
 
 	switch network {
+	case "goerli":
+		w.Config = constants.GoerliConfig
 	case "fuji":
 		w.Config = constants.AvmFujiConfig
 	case "mainnet":
@@ -144,7 +112,6 @@ func NewEmptyWallet(network string, name string, threshold int, me user.User, ot
 
 	return w
 }
-
 
 // Do the funky chicken to unmarshal then init the struct
 // TODO is this really best way init an unmarshaled struct?
@@ -175,8 +142,8 @@ func (w *Wallet) Initialize(keydata []byte) {
 	w.Address = w.GetFormattedAddress()
 }
 
-func (w *Wallet) GetName() string {return w.Name}
-func (w *Wallet) SetName(name string) {w.Name = name}
+func (w *Wallet) GetName() string     { return w.Name }
+func (w *Wallet) SetName(name string) { w.Name = name }
 
 // All signers excluding me
 func (w *Wallet) OtherPartyIDs() party.IDSlice {
@@ -191,7 +158,7 @@ func (w *Wallet) OtherPartyIDs() party.IDSlice {
 func (w *Wallet) AllPartyIDs() party.IDSlice {
 	var list []party.ID
 	list = append(list, w.Me.PartyID())
-	
+
 	for _, s := range w.Others {
 		list = append(list, s.PartyID())
 	}
@@ -202,13 +169,13 @@ func (w *Wallet) AllPartyIDs() party.IDSlice {
 func (w *Wallet) AllPartyNicks() []string {
 	var list []string
 	list = append(list, w.Me.Nick)
-	
+
 	for _, s := range w.Others {
 		list = append(list, s.Nick)
 	}
 
 	sort.Strings(list)
-	
+
 	return list
 }
 
@@ -217,7 +184,9 @@ func (w *Wallet) GetUnwrappedKeyData() mpsconfig.Config {
 	// TODO cache this
 	c := mpsconfig.EmptyConfig(curve.Secp256k1{})
 	err := cbor.Unmarshal(w.KeyData, c)
-	if err != nil {log.Fatalf("GetUnwrappedKeyData error %v", err)} //TODO
+	if err != nil {
+		log.Fatalf("GetUnwrappedKeyData error %v", err)
+	} //TODO
 	return *c
 }
 
@@ -225,10 +194,14 @@ func (w *Wallet) GetUnwrappedKeyData() mpsconfig.Config {
 func (w *Wallet) PublicKeyAvm() avacrypto.PublicKey {
 	kd := w.GetUnwrappedKeyData()
 	ppb, err := kd.PublicPoint().MarshalBinary()
-	if err != nil {panic(err)} //TODO
+	if err != nil {
+		panic(err)
+	} //TODO
 	f := avacrypto.FactorySECP256K1R{}
 	avapk, err := f.ToPublicKey(ppb)
-	if err != nil {panic(err)} //TODO
+	if err != nil {
+		panic(err)
+	} //TODO
 	return avapk
 }
 
@@ -241,7 +214,7 @@ func (w *Wallet) PublicKeyMpsPoint() curve.Point {
 // Codec returns the codec used for serialization
 func (w *Wallet) Codec() codec.Manager {
 	if w.codec != nil {
-		return w.codec 
+		return w.codec
 	}
 
 	c := linearcodec.NewDefault()
@@ -281,9 +254,9 @@ func (w *Wallet) Unmarshal(source []byte) (destination interface{}, err error) {
 // The string form of an Avalanche address (X-fuji1blahblah...)
 func (w *Wallet) GetFormattedAddress() string {
 	b := w.PublicKeyAvm().Address().Bytes()
-	addr, err := formatting.FormatAddress(w.Config.ChainName,w.Config.NetworkName, b)
+	addr, err := formatting.FormatAddress(w.Config.ChainName, w.Config.NetworkName, b)
 	if err != nil {
-	 	panic("Fatal error converting multisig public key to Avax format")
+		panic("Fatal error converting multisig public key to Avax format")
 	}
 
 	return addr
@@ -305,8 +278,8 @@ func (w *Wallet) FetchUTXOs() error {
 	w.mutex.Lock()
 	w.isFetching = true
 	defer w.doneFetching()
-	defer w.mutex.Unlock()	
-	
+	defer w.mutex.Unlock()
+
 	d, _ := time.ParseDuration(apiTimeout)
 	c := avm.NewClient(w.Config.RPCHostURL, w.Config.ChainName, d)
 	// TODO handle pagination if more that 1024
@@ -347,7 +320,7 @@ func (w *Wallet) FetchUTXOs() error {
 			}
 		}
 	}
-	
+
 	return nil
 }
 
@@ -357,7 +330,7 @@ func (w *Wallet) doneFetching() {
 
 func (w *Wallet) IssueTx(txBytes []byte) (ids.ID, error) {
 	w.mutex.Lock()
-	defer w.mutex.Unlock()	
+	defer w.mutex.Unlock()
 
 	d, _ := time.ParseDuration(apiTimeout)
 	c := avm.NewClient(w.Config.RPCHostURL, w.Config.ChainName, d)
@@ -375,7 +348,7 @@ func (w *Wallet) ConfirmTx(txID ids.ID) bool {
 	d, _ := time.ParseDuration(apiTimeout)
 	c := avm.NewClient(w.Config.RPCHostURL, w.Config.ChainName, d)
 	result, _ := c.ConfirmTx(txID, attempts, delay)
-	return result == choices.Accepted 
+	return result == choices.Accepted
 }
 
 // AddUTXO adds a new UTXO to this wallet if this wallet may spend it
@@ -418,8 +391,8 @@ func (w *Wallet) addUTXO(utxo *avax.UTXO) {
 // }
 
 // Balance returns the amount of the assets in this wallet
-func (w *Wallet) Balance(assetID ids.ID) uint64 { 
-	return w.balance[assetID] 
+func (w *Wallet) Balance(assetID ids.ID) uint64 {
+	return w.balance[assetID]
 }
 
 func (w *Wallet) GetBalances() map[ids.ID]uint64 {
@@ -428,7 +401,7 @@ func (w *Wallet) GetBalances() map[ids.ID]uint64 {
 }
 
 // Balance returns the amount of the assets in this wallet in units of AVAX
-func (w *Wallet) BalanceForDisplay(assetID ids.ID) string { 
+func (w *Wallet) BalanceForDisplay(assetID ids.ID) string {
 	if w.IsFetching() {
 		return "<fetching balance>"
 	} else {
@@ -442,7 +415,7 @@ func (w *Wallet) BalanceForDisplay(assetID ids.ID) string {
 func (w *Wallet) CreateTx(assetID ids.ID, amount uint64, destAddr ids.ShortID, memo string) (*avm.Tx, error) {
 	displayAddr, err := formatting.FormatAddress(w.Config.ChainName, w.Config.NetworkName, destAddr.Bytes())
 	if err != nil {
-	 	return nil, errors.New("error converting destaddr to Avax format")
+		return nil, errors.New("error converting destaddr to Avax format")
 	}
 
 	log.Printf("CreateTx: assetID: %v, amount(uint64): %d, destAddr: %v, memo: %s", w.FormatAssetID(assetID), amount, displayAddr, memo)
@@ -513,7 +486,6 @@ func (w *Wallet) CreateTx(assetID ids.ID, amount uint64, destAddr ids.ShortID, m
 		return nil, fmt.Errorf("problem calculating required spend amount: %w", err)
 	}
 
-
 	if amountSpent > amountWithFee {
 		// TODO HD wallet addresses?
 		changeAddr := w.PublicKeyAvm().Address()
@@ -567,7 +539,7 @@ func (w *Wallet) MpsSigToAvaSig(hashedmsg []byte, mpssig *mpsecdsa.Signature) ([
 	if err != nil {
 		return []byte{}, err
 	}
-	
+
 	// Avalanche sig is r | s | v  where v is the recovery byte
 	var sigava [65]byte
 	copy(sigava[0:32], rb[0:32])
@@ -604,7 +576,7 @@ func (w *Wallet) MpsSigToAvaSig(hashedmsg []byte, mpssig *mpsecdsa.Signature) ([
 			log.Printf("MpsSigToAvaSig err with Code: %v  Err: %v", c, err)
 		}
 	}
-	
+
 	return []byte{}, errors.New("recovered public key didnt match original public key")
 }
 
@@ -625,7 +597,7 @@ func (w *Wallet) FormatAssetID(assetID ids.ID) string {
 	default:
 		return assetID.String()
 	}
-}	
+}
 
 func (w *Wallet) GetAsset(assetID ids.ID) Asset {
 	return w.assets[assetID]

@@ -3,16 +3,18 @@ package commands
 import (
 	"fmt"
 
-	"github.com/johnthethird/thresher/config"
-	"github.com/johnthethird/thresher/configdir"
+	"github.com/shykerbogdan/mpc-wallet/config"
+	"github.com/shykerbogdan/mpc-wallet/configdir"
 
 	"github.com/moby/term"
 	"github.com/spf13/cobra"
 )
 
 const rootCmdName = "thresher"
+
 var appDirs = configdir.New(rootCmdName)
 var appConfig *config.AppConfig = &config.AppConfig{}
+
 const asciiArt = `
 
   _______________________________  __      __        .__  .__          __   
@@ -24,17 +26,16 @@ const asciiArt = `
 `
 
 func NewRootCommand() *cobra.Command {
-	
+
 	cmd := &cobra.Command{
 		Use:   rootCmdName,
 		Short: "short desc",
-		Long: `long desc`,
+		Long:  `long desc`,
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			// We run this method for its side-effects. On windows, this will enable the windows terminal
 			// to understand ANSI escape codes.
 			// TODO do we need this? brings in a lot of dependencies
 			_, _, _ = term.StdStreams()
-
 
 			filename, _ := cmd.Flags().GetString("config")
 			if config.FileExists(filename) {

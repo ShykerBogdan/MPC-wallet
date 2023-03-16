@@ -1,11 +1,10 @@
 package protocols
 
 import (
-	"github.com/johnthethird/thresher/network"
+	"github.com/shykerbogdan/mpc-wallet/network"
 	"github.com/taurusgroup/multi-party-sig/pkg/party"
 	"github.com/taurusgroup/multi-party-sig/pkg/protocol"
 )
-
 
 func handlerLoop(id party.ID, h protocol.Handler, network network.Network) {
 	for {

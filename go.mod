@@ -1,4 +1,4 @@
-module github.com/johnthethird/thresher
+module github.com/shykerbogdan/mpc-wallet
 
 go 1.16
 
@@ -6,8 +6,10 @@ require (
 	github.com/ava-labs/avalanchego v1.5.2
 	github.com/davecgh/go-spew v1.1.1
 	github.com/decred/dcrd/dcrec/secp256k1/v3 v3.0.0
+	github.com/ethereum/go-ethereum v1.9.18
 	github.com/fxamacker/cbor/v2 v2.3.0
 	github.com/gdamore/tcell/v2 v2.4.0
+	github.com/gin-gonic/gin v1.6.3
 	github.com/google/go-cmp v0.5.6 // indirect
 	github.com/ipfs/go-cid v0.1.0
 	github.com/ipfs/go-log/v2 v2.3.0 // indirect
@@ -27,10 +29,14 @@ require (
 	github.com/mr-tron/base58 v1.2.0
 	github.com/multiformats/go-multiaddr v0.4.1
 	github.com/multiformats/go-multihash v0.0.16
+	github.com/pborman/uuid v1.2.0
 	github.com/rivo/tview v0.0.0-20210624165335-29d673af0ce2
 	github.com/spf13/cobra v1.2.1
 	github.com/stretchr/testify v1.7.0
 	github.com/taurusgroup/multi-party-sig v0.5.0-alpha-2021-09-08
+	github.com/urfave/cli v1.22.1
+	github.com/urfave/cli/v2 v2.2.0
+	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5
 	golang.org/x/term v0.0.0-20210615171337-6886f2dfbf5b // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/tools v0.1.6-0.20210908190839-cf92b39a962c // indirect

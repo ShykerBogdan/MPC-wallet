@@ -6,7 +6,7 @@ import (
 
 // TODO Figure out how to abstract all this for supporting P-chain and multiple UTXO-based blockchains BTC/LTC etc
 
-type AvmConfig struct {
+type ChainConfig struct {
 	Blockchain string
 	NetworkName string
 	NetworkID uint32
@@ -21,7 +21,7 @@ type AvmConfig struct {
 var fujiChainID, _ = ids.FromString("2JVSBoinj9C2J33VntvzYtVJNZdN2NKiwwKjcumHUWEb5DbBrm") // Fuji X-chain
 var fujiAssetID, _ = ids.FromString("U8iRqJoiJm8xZHAacmvYyZVwqQx6uDNtQeP3CQ6fcgQk3JqnK") // Fuji AVAX
 
-var AvmFujiConfig = AvmConfig{
+var AvmFujiConfig = ChainConfig{
 	Blockchain:  "avalanche",
 	NetworkName: "fuji",
 	NetworkID:   5,
@@ -49,4 +49,20 @@ var AvmMainnetConfig = ChainConfig{
 	RPCHostURL:  "https://api.avax.network:443",
 	ExplorerURL: "https://explorer.avax.network/tx/%s",
 }
+
+var goerliChainID, _ = ids.FromString("2oYMBNV4eNHyqk2fjjV5nVQLDbtmNJzq5s3qs3Lo6ftnC6FByM")
+var goerliAssetID, _ = ids.FromString("0xFfb99f4A02712C909d8F7cC44e67C87Ea1E71E83") 
+
+var GoerliConfig = ChainConfig{
+	Blockchain:  "Ethereum",
+	NetworkName: "mainnet",
+	NetworkID:   5,
+	ChainName:   "Goerli",
+	ChainID:     goerliChainID,
+	AssetName:   "eth",
+	AssetID:     mainnetAssetID,
+	RPCHostURL:  "https://goerli.blockpi.network/v1/rpc/public",
+	ExplorerURL: "https://goerli.etherscan.io/tx/%s",
+}
+
 

@@ -3,7 +3,7 @@ package commands
 import (
 	"fmt"
 
-	"github.com/johnthethird/thresher/version"
+	"github.com/shykerbogdan/mpc-wallet/version"
 	"github.com/spf13/cobra"
 )
 

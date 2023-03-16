@@ -6,8 +6,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/johnthethird/thresher/config"
-	"github.com/johnthethird/thresher/network/chat"
+	"github.com/shykerbogdan/mpc-wallet/config"
+	"github.com/shykerbogdan/mpc-wallet/network/chat"
 	"github.com/spf13/cobra"
 )
 
@@ -21,7 +21,7 @@ func walletCommand() *cobra.Command {
 		Long:  ``,
 		Run: func(c *cobra.Command, args []string) {
 			appConfig.MustExist()
-			
+
 			logFileName, _ := c.Flags().GetString("log")
 			setLogOutput(logFileName)
 			log.Println(appConfig.String())
@@ -33,13 +33,13 @@ func walletCommand() *cobra.Command {
 			runChatCmd(appConfig, bootstrapaddrs, listenaddrs)
 		},
 	}
-	
+
 	cmd.Flags().StringSliceVar(&bootstrapaddrs, "bootstrap", []string{}, "bootstrap addrs")
 	cmd.Flags().StringSliceVar(&listenaddrs, "listen", []string{}, "listen addrs")
-	// TODO Where should we put the config and log files? 
+	// TODO Where should we put the config and log files?
 	cmd.Flags().StringP("config", "c", "thresher.json", "config file which **contains secrets**")
 	cmd.Flags().StringP("log", "l", "thresher.log", "logfile")
-	
+
 	return cmd
 }
 
@@ -74,10 +74,9 @@ func setLogOutput(filename string) {
 		return
 	}
 
-	file, err := os.OpenFile(filename, os.O_CREATE | os.O_APPEND | os.O_WRONLY, 0600)
+	file, err := os.OpenFile(filename, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
 	if err != nil {
 		panic(err)
 	}
 	log.SetOutput(file)
 }
-

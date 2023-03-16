@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/johnthethird/thresher/user"
+	"github.com/shykerbogdan/mpc-wallet/user"
 
 	"github.com/ipfs/go-cid"
 	"github.com/libp2p/go-libp2p"
@@ -62,7 +62,6 @@ func NewP2P(me user.Me, chatroomname string, bootstrapaddrs []string, listenaddr
 	pubsubhandler := setupPubSub(ctx, nodehost, routingdiscovery)
 	log.Printf("Created the PubSub Handler")
 
-	
 	p2phost := &P2P{
 		Ctx:          ctx,
 		Me:           me,
@@ -72,7 +71,7 @@ func NewP2P(me user.Me, chatroomname string, bootstrapaddrs []string, listenaddr
 		PubSub:       pubsubhandler,
 		ChatroomName: chatroomname,
 	}
-	
+
 	log.Printf("Host libp2p protocols: %s", strings.Join(nodehost.Mux().Protocols(), ", "))
 	log.Printf("Connected to libp2p network with peerID %s listening on %v", p2phost.Host.ID().Pretty(), p2phost.Host.Addrs())
 
@@ -137,10 +136,12 @@ func bootstrapPeers(addrs []string) []peer.AddrInfo {
 	var mas []multiaddr.Multiaddr
 	for _, s := range addrs {
 		ma, err := multiaddr.NewMultiaddr(s)
-		if err != nil {panic(err)}
-		mas = append(mas,ma)
+		if err != nil {
+			panic(err)
+		}
+		mas = append(mas, ma)
 	}
-	
+
 	ds := make([]peer.AddrInfo, 0, len(mas))
 	for i := range mas {
 		info, err := peer.AddrInfoFromP2pAddr(mas[i])
@@ -164,15 +165,15 @@ func setupHostAndDHT(ctx context.Context, bootstrapaddrs []string, listenaddrs [
 	var kaddht *dht.IpfsDHT
 	routing := libp2p.Routing(func(h host.Host) (routing.PeerRouting, error) {
 		kaddht, err = dht.New(
-			ctx, 
-			h, 
-			dht.Mode(dht.ModeAutoServer), 
+			ctx,
+			h,
+			dht.Mode(dht.ModeAutoServer),
 			dht.BootstrapPeers(bootstrappeers...),
 		)
 		return kaddht, err
 	})
 
-	// libp2p defaults are /ip4/0.0.0.0/tcp/0, /ip6/::/tcp/0, enable relay, /yamux/1.0.0, /mplex/6.7.0, tls, noise, tcp, ws, empty peerstore		
+	// libp2p defaults are /ip4/0.0.0.0/tcp/0, /ip6/::/tcp/0, enable relay, /yamux/1.0.0, /mplex/6.7.0, tls, noise, tcp, ws, empty peerstore
 	libhost, err := libp2p.New(
 		routing,
 		libp2p.ConnectionManager(connmgr.NewConnManager(50, 100, time.Minute)),
@@ -203,7 +204,7 @@ func setupPubSub(ctx context.Context, nodehost host.Host, routingdiscovery *disc
 	// 	return false
 	// }
 	// pubsubhandler, err := pubsub.NewGossipSub(ctx, nodehost, [pubsub.WithDiscovery(routingdiscovery), pubsub.WithGossipSubProtocols(protos, features)])
-  
+
 	pubsubhandler, err := pubsub.NewGossipSub(ctx, nodehost, pubsub.WithDiscovery(routingdiscovery))
 	if err != nil {
 		log.Fatalf("PubSub Handler Creation Failed! %v", err)

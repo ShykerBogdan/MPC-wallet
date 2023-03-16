@@ -4,8 +4,8 @@ import (
 	"log"
 
 	"github.com/fxamacker/cbor/v2"
-	"github.com/johnthethird/thresher/network"
-	"github.com/johnthethird/thresher/wallet/avmwallet"
+	"github.com/shykerbogdan/mpc-wallet/network"
+	"github.com/shykerbogdan/mpc-wallet/wallet/avmwallet"
 	"github.com/taurusgroup/multi-party-sig/pkg/math/curve"
 	"github.com/taurusgroup/multi-party-sig/pkg/pool"
 	"github.com/taurusgroup/multi-party-sig/pkg/protocol"
@@ -33,22 +33,21 @@ func RunKeygen(w *avmwallet.Wallet, net network.Network) error {
 	if err != nil {
 		return err
 	}
-	
+
 	log.Print("Keygen protocol complete")
 
 	c := r.(*config.Config)
 
-	log.Printf("KeyData result: %v",c)
+	log.Printf("KeyData result: %v", c)
 
 	cb, err := cbor.Marshal(c)
-	log.Printf("KeyData marshal: %v",cb)
-	
+	log.Printf("KeyData marshal: %v", cb)
+
 	if err != nil {
 		return err
-	}	
-	
+	}
+
 	w.Initialize(cb)
 
 	return nil
 }
-

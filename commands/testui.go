@@ -1,7 +1,7 @@
 package commands
 
 import (
-	"github.com/johnthethird/thresher/network/chat"
+	"github.com/shykerbogdan/mpc-wallet/network/chat"
 	"github.com/spf13/cobra"
 )
 

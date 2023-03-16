@@ -6,10 +6,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/johnthethird/thresher/network"
-	"github.com/johnthethird/thresher/user"
-	"github.com/johnthethird/thresher/utils"
-	"github.com/johnthethird/thresher/version"
+	"github.com/shykerbogdan/mpc-wallet/network"
+	"github.com/shykerbogdan/mpc-wallet/user"
+	"github.com/shykerbogdan/mpc-wallet/utils"
+	"github.com/shykerbogdan/mpc-wallet/version"
 
 	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/utils/formatting"
@@ -20,7 +20,7 @@ import (
 	"github.com/rivo/tview"
 )
 
-var	inputWidth = 70
+var inputWidth = 70
 
 // A structure that represents the ChatRoom UI
 type UI struct {
@@ -35,19 +35,19 @@ type UI struct {
 
 // A structure that represents the tview application
 type TermApp struct {
-	TerminalApp *tview.Application
-	pages *tview.Pages
+	TerminalApp    *tview.Application
+	pages          *tview.Pages
 	participantBox *tview.TextView
-	keyBox *tview.TextView
-	messageBox *tview.TextView
-	helpBox *tview.TextView
-	inputBox *tview.InputField
+	keyBox         *tview.TextView
+	messageBox     *tview.TextView
+	helpBox        *tview.TextView
+	inputBox       *tview.InputField
 }
 
 // A structure that represents a UI command (i.e. /somecommand)
 type UICommand struct {
 	cmdtype string
-	cmdargs  []string
+	cmdargs []string
 }
 
 // Create a new tview application
@@ -70,7 +70,7 @@ func NewTerminalApp(blockchain string, roomname string, nick string, cmdchan cha
 
 	titlebox := tview.NewFlex().SetDirection(tview.FlexColumn).
 		AddItem(titleleftbox, 0, 1, false).
-		AddItem(titlerightbox, 0,1,false)
+		AddItem(titlerightbox, 0, 1, false)
 
 	titlebox.
 		SetBorder(true).
@@ -204,7 +204,7 @@ func NewUI(cr *ChatRoom, net network.Network) *UI {
 		net:       net,
 		MsgInputs: msgchan,
 		CmdInputs: cmdchan,
- 	}
+	}
 
 	return ui
 }
@@ -265,11 +265,11 @@ func (ui *UI) generateKeyForm() {
 			}
 		}
 
-		if (threshold <= 0) || (threshold > len(signers) - 1) {
+		if (threshold <= 0) || (threshold > len(signers)-1) {
 			ui.message("Threshold must be less than total signers", "OK", "main", nil)
 			return
 		}
-		
+
 		go ui.generateKey(name, threshold, signers)
 		ui.pages.RemovePage("form").ShowPage("main")
 	})
@@ -294,9 +294,9 @@ func (ui *UI) generateKey(keyname string, threshold int, signers []user.User) {
 		Type:       messageTypeStartKeygen,
 		SenderName: ui.cfg.Me.Nick,
 		StartKeygen: startkeygencmd{
-			Name: keyname,
+			Name:      keyname,
 			Threshold: threshold,
-			Signers: signers,
+			Signers:   signers,
 		},
 	}
 
@@ -344,11 +344,11 @@ func (ui *UI) signMsgForm() {
 			}
 		}
 
-		if (len(signers) <= msk.Threshold) {
+		if len(signers) <= msk.Threshold {
 			ui.message(fmt.Sprintf("Wallet threshold requires at least %v signers", msk.Threshold+1), "OK", "main", nil)
 			return
 		}
-		
+
 		go ui.signMsg(keyname, message, signers)
 
 		ui.pages.RemovePage("form").ShowPage("main")
@@ -374,7 +374,7 @@ func (ui *UI) signMsg(keyname string, message string, signers []user.User) {
 		Type:       messageTypeStartSign,
 		SenderName: ui.cfg.Me.Nick,
 		StartSign: startsigncmd{
-			Name: keyname,
+			Name:    keyname,
 			Message: message,
 			Signers: signers,
 		},
@@ -419,10 +419,10 @@ func (ui *UI) sendTxForm() {
 	}
 
 	form.AddButton("Sign and Send", func() {
-		walletname  := form.GetFormItemByLabel("Wallet Name").(*tview.InputField).GetText()
+		walletname := form.GetFormItemByLabel("Wallet Name").(*tview.InputField).GetText()
 		destaddr := form.GetFormItemByLabel("Dest Addr").(*tview.InputField).GetText()
-		amount   := form.GetFormItemByLabel("Amount").(*tview.InputField).GetText()
-		memo     := form.GetFormItemByLabel("Memo").(*tview.InputField).GetText()
+		amount := form.GetFormItemByLabel("Amount").(*tview.InputField).GetText()
+		memo := form.GetFormItemByLabel("Memo").(*tview.InputField).GetText()
 
 		w := ui.cfg.FindWallet(walletname)
 		// Always include ourselves
@@ -434,7 +434,7 @@ func (ui *UI) sendTxForm() {
 			}
 		}
 
-		if (len(signers) <= w.Threshold) {
+		if len(signers) <= w.Threshold {
 			ui.message(fmt.Sprintf("Wallet threshold requires at least %v signers", w.Threshold+1), "OK", "main", nil)
 			return
 		}
@@ -445,7 +445,7 @@ func (ui *UI) sendTxForm() {
 				othernicks = append(othernicks, s.Nick)
 			}
 		}
-		
+
 		var amt float64
 		_, err := fmt.Sscan(amount, &amt)
 		if err != nil {
@@ -469,7 +469,7 @@ func (ui *UI) sendTxForm() {
 	ui.pages.AddAndSwitchToPage("form", ui.modal(form, 80, 29), true).ShowPage("main")
 }
 
-// Construct a Tx, and run the SendTx multi-party protocol. 
+// Construct a Tx, and run the SendTx multi-party protocol.
 // Also notifies other signers to contruct the Tx and start the protocol.
 // TODO support other assetids besides AVAX duh
 func (ui *UI) sendTx(walletname string, destaddr string, amount uint64, memo string, signers []user.User) {
@@ -489,11 +489,11 @@ func (ui *UI) sendTx(walletname string, destaddr string, amount uint64, memo str
 		Type:       messageTypeStartSendTx,
 		SenderName: ui.cfg.Me.Nick,
 		StartSendTx: startsendtxcmd{
-			Name: walletname,
-			Amount: amount,
+			Name:     walletname,
+			Amount:   amount,
 			DestAddr: destaddr,
-			Memo: memo,
-			Signers: signers,
+			Memo:     memo,
+			Signers:  signers,
 		},
 	}
 	ui.runProtocolSendTx(walletname, destaddr, amount, memo, signers)
@@ -535,7 +535,7 @@ func (ui *UI) startEventHandler() {
 	refreshticker := time.NewTicker(time.Second)
 	defer refreshticker.Stop()
 
-	fetchticker := time.NewTicker(time.Second*130)
+	fetchticker := time.NewTicker(time.Second * 130)
 	defer fetchticker.Stop()
 
 	for {
@@ -585,7 +585,7 @@ func (ui *UI) startEventHandler() {
 						othernicks = append(othernicks, s.Nick)
 					}
 				}
-				
+
 				// TODO is division the best way to do this?
 				amtDisplay := float64(msg.StartSendTx.Amount) / float64(units.Avax)
 				confirmMsg := fmt.Sprintf("%s wants %s to send %v AVAX to address %s", msg.SenderName, strings.Join(othernicks, ","), amtDisplay, msg.StartSendTx.DestAddr)
@@ -609,7 +609,7 @@ func (ui *UI) startEventHandler() {
 					if err != nil {
 						ui.MsgInputs <- fmt.Sprintf("Error parsing dest addr to id %s: %v", msg.StartSendTx.DestAddr, err)
 					}
-					
+
 					tx, err := w.CreateTx(w.Config.AssetID, msg.StartSendTx.Amount, destid, msg.StartSendTx.Memo)
 					if err != nil {
 						ui.MsgInputs <- fmt.Sprintf("Error CreateTx %v", err)
@@ -619,7 +619,7 @@ func (ui *UI) startEventHandler() {
 						ui.MsgInputs <- fmt.Sprintf("Error GetUnsignedBytes %v", err)
 					}
 					msgHash := hashing.ComputeHash256(unsignedBytes)
-					
+
 					go ui.runProtocolSign(msg.StartSendTx.Name, msgHash, msg.StartSendTx.Signers)
 				})
 			}
@@ -655,7 +655,7 @@ func (ui *UI) handleCommand(cmd UICommand) {
 
 	case "/sendtx":
 		ui.sendTxForm()
-		
+
 	// Unsupported command
 	default:
 		ui.Logs <- chatlog{level: logLevelInfo, msg: fmt.Sprintf("unsupported command - %s", cmd.cmdtype)}
@@ -704,8 +704,8 @@ func (ui *UI) syncWallets() {
 		signers := fmt.Sprint(strings.Join(w.AllPartyNicks(), ","))
 		bal := w.BalanceForDisplay(w.Config.AssetID)
 		fmt.Fprintf(
-			ui.keyBox, 
-			"[blue]<%s>[-]\n[yellow]%s[-]\n[white]Balance:[-] [green]%s[-] [white]AVAX[-]\n[grey]Signers: %s (%d of %d)\n", 
+			ui.keyBox,
+			"[blue]<%s>[-]\n[yellow]%s[-]\n[white]Balance:[-] [green]%s[-] [white]AVAX[-]\n[grey]Signers: %s (%d of %d)\n",
 			w.Name, w.Address, bal, signers, m, n)
 	}
 }
@@ -725,20 +725,20 @@ func (ui *UI) modal(p tview.Primitive, width, height int) tview.Primitive {
 }
 
 func (ui *UI) globalKeyboardIntercept(event *tcell.EventKey) *tcell.EventKey {
-		switch event.Key() {
-		case tcell.KeyF2:
-			ui.generateKeyForm()
-		case tcell.KeyF3:
-			ui.sendTxForm()
-		case tcell.KeyF4:
-			ui.signMsgForm()
-		}
-		// if event.Key() == tcell.KeyPgUp {
-		// 	row, column := messagebox.GetScrollOffset()
-		// 	messagebox.ScrollTo(row-10, column)
-		// }
+	switch event.Key() {
+	case tcell.KeyF2:
+		ui.generateKeyForm()
+	case tcell.KeyF3:
+		ui.sendTxForm()
+	case tcell.KeyF4:
+		ui.signMsgForm()
+	}
+	// if event.Key() == tcell.KeyPgUp {
+	// 	row, column := messagebox.GetScrollOffset()
+	// 	messagebox.ScrollTo(row-10, column)
+	// }
 
-		return event
+	return event
 }
 
 // func floatingModal(p tview.Primitive, width, height int) tview.Primitive {
