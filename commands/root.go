@@ -54,7 +54,7 @@ func NewRootCommand() *cobra.Command {
 	cmd.AddCommand(versionCommand())
 	cmd.AddCommand(walletCommand())
 	cmd.AddCommand(testUICommand())
-	cmd.AddCommand(debugCommand())
+	//cmd.AddCommand(debugCommand())
 	cmd.AddCommand(bootstrapCommand())
 
 	return cmd

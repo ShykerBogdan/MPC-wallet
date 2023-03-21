@@ -5,7 +5,7 @@ import (
 
 	"github.com/fxamacker/cbor/v2"
 	"github.com/shykerbogdan/mpc-wallet/network"
-	"github.com/shykerbogdan/mpc-wallet/wallet/avmwallet"
+	"github.com/shykerbogdan/mpc-wallet/wallet/ethwallet"
 	"github.com/taurusgroup/multi-party-sig/pkg/math/curve"
 	"github.com/taurusgroup/multi-party-sig/pkg/pool"
 	"github.com/taurusgroup/multi-party-sig/pkg/protocol"
@@ -13,7 +13,7 @@ import (
 	"github.com/taurusgroup/multi-party-sig/protocols/cmp/config"
 )
 
-func RunKeygen(w *avmwallet.Wallet, net network.Network) error {
+func RunKeygen(w *ethwallet.Wallet, net network.Network) error {
 	selfid := w.Me.PartyID()
 	allids := w.AllPartyIDs()
 	threshold := w.Threshold

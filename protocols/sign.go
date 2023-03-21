@@ -7,7 +7,7 @@ import (
 	"github.com/ava-labs/avalanchego/utils/formatting"
 	"github.com/shykerbogdan/mpc-wallet/network"
 	"github.com/shykerbogdan/mpc-wallet/user"
-	"github.com/shykerbogdan/mpc-wallet/wallet/avmwallet"
+	"github.com/shykerbogdan/mpc-wallet/wallet/ethwallet"
 	mpsecdsa "github.com/taurusgroup/multi-party-sig/pkg/ecdsa"
 	"github.com/taurusgroup/multi-party-sig/pkg/party"
 	"github.com/taurusgroup/multi-party-sig/pkg/pool"
@@ -15,7 +15,7 @@ import (
 	"github.com/taurusgroup/multi-party-sig/protocols/cmp"
 )
 
-func RunSign(w *avmwallet.Wallet, msghash []byte, signers []user.User, net network.Network) (*mpsecdsa.Signature, error) {
+func RunSign(w *ethwallet.Wallet, msghash []byte, signers []user.User, net network.Network) (*mpsecdsa.Signature, error) {
 	pl := pool.NewPool(0)
 	defer pl.TearDown()
 
@@ -46,7 +46,7 @@ func RunSign(w *avmwallet.Wallet, msghash []byte, signers []user.User, net netwo
 
 	log.Printf("MPC lib signature: %s", signature)
 
-	avaSignature, err := w.MpsSigToAvaSig(msghash, signature)
+	avaSignature, err := w.MpcSigToEthSig(msghash, signature)
 	if err != nil {
 		return nil, err
 	}

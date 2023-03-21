@@ -72,7 +72,7 @@ func NewP2P(me user.Me, chatroomname string, bootstrapaddrs []string, listenaddr
 		ChatroomName: chatroomname,
 	}
 
-	log.Printf("Host libp2p protocols: %s", strings.Join(nodehost.Mux().Protocols(), ", "))
+	//log.Printf("Host libp2p protocols: %s", strings.Join(nodehost.Mux().Protocols(), ", "))
 	log.Printf("Connected to libp2p network with peerID %s listening on %v", p2phost.Host.ID().Pretty(), p2phost.Host.Addrs())
 
 	return p2phost

@@ -31,7 +31,7 @@ func DecodeSingle(str string, typ string) (res interface{}, err error) {
 		return "", nil
 	}
 	outptr := reflect.New(reflect.TypeOf(""))
-	err = abi.Unpack(outptr.Interface(), "method", b)
+	err = abi.UnpackIntoInterface(outptr.Interface(), "method", b)// UnpackIntoInterface -> unpack
 	if err != nil {
 		return "", nil
 	}

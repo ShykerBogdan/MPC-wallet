@@ -11,11 +11,11 @@ import (
 	"time"
 
 	"github.com/shykerbogdan/mpc-wallet/user"
-	"github.com/shykerbogdan/mpc-wallet/wallet/avmwallet"
+	"github.com/shykerbogdan/mpc-wallet/wallet/ethwallet"
 )
 
 type AppConfig struct {
-	// avalanche
+	// Goerli
 	Blockchain string
 
 	// mainnet, fuji
@@ -29,8 +29,7 @@ type AppConfig struct {
 
 	Me user.Me
 
-	// TODO Implement wallet types / factory for other chains (BTC, etc)
-	Wallets map[string]*avmwallet.Wallet
+	Wallets map[string]*ethwallet.Wallet
 
 	UpdatedAt time.Time
 
@@ -58,7 +57,7 @@ func New(blockchain string, network string, project string, nick string, address
 		Me:         me,
 		Project:    project,
 		P2PNetwork: "chatnet",
-		Wallets:    make(map[string]*avmwallet.Wallet),
+		Wallets:    make(map[string]*ethwallet.Wallet),
 		isLoaded:   false,
 	}
 
@@ -146,7 +145,7 @@ func (ac *AppConfig) Persist() {
 }
 
 // Create a new empty wallet which will hold a multisig key after the multi-party keygen protocol has been completed
-func (ac *AppConfig) NewEmptyWallet(name string, threshold int, signers []user.User) *avmwallet.Wallet {
+func (ac *AppConfig) NewEmptyWallet(name string, threshold int, signers []user.User) *ethwallet.Wallet {
 	others := []user.User{}
 	for _, u := range signers {
 		if u.Address != ac.Me.Address {
@@ -154,15 +153,15 @@ func (ac *AppConfig) NewEmptyWallet(name string, threshold int, signers []user.U
 		}
 	}
 
-	w := avmwallet.NewEmptyWallet(ac.Network, name, threshold, ac.Me.User, others)
+	w := ethwallet.NewEmptyWallet(ac.Network, name, threshold, ac.Me.User, others)
 	return w
 }
 
-func (ac *AppConfig) FindWallet(name string) *avmwallet.Wallet {
+func (ac *AppConfig) FindWallet(name string) *ethwallet.Wallet {
 	return ac.Wallets[name]
 }
 
-func (ac *AppConfig) AddWallet(w *avmwallet.Wallet) error {
+func (ac *AppConfig) AddWallet(w *ethwallet.Wallet) error {
 	ac.mutex.Lock()
 	ac.Wallets[w.GetName()] = w
 	ac.mutex.Unlock()

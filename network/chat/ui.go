@@ -10,12 +10,6 @@ import (
 	"github.com/shykerbogdan/mpc-wallet/user"
 	"github.com/shykerbogdan/mpc-wallet/utils"
 	"github.com/shykerbogdan/mpc-wallet/version"
-
-	"github.com/ava-labs/avalanchego/ids"
-	"github.com/ava-labs/avalanchego/utils/formatting"
-	"github.com/ava-labs/avalanchego/utils/hashing"
-	"github.com/ava-labs/avalanchego/utils/units"
-
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
@@ -303,89 +297,89 @@ func (ui *UI) generateKey(keyname string, threshold int, signers []user.User) {
 	ui.runProtocolKeygen(keyname, threshold, signers)
 }
 
-func (ui *UI) signMsgForm() {
-	participants := ui.ParticipantList()
+// func (ui *UI) signMsgForm() {
+// 	participants := ui.ParticipantList()
 
-	if len(participants) == 0 {
-		ui.message("No participants are online and available", "OK", "main", nil)
-		return
-	}
+// 	if len(participants) == 0 {
+// 		ui.message("No participants are online and available", "OK", "main", nil)
+// 		return
+// 	}
 
-	form := tview.NewForm()
-	form.SetBorder(true)
-	form.SetTitle("Sign Text Message")
-	form.SetTitleAlign(tview.AlignLeft)
-	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		switch event.Key() {
-		case tcell.KeyEsc:
-			ui.pages.RemovePage("form").ShowPage("main")
-		}
-		return event
-	})
+// 	form := tview.NewForm()
+// 	form.SetBorder(true)
+// 	form.SetTitle("Sign Text Message")
+// 	form.SetTitleAlign(tview.AlignLeft)
+// 	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+// 		switch event.Key() {
+// 		case tcell.KeyEsc:
+// 			ui.pages.RemovePage("form").ShowPage("main")
+// 		}
+// 		return event
+// 	})
 
-	form.AddInputField("Wallet Name", "", inputWidth, nil, nil)
-	form.AddInputField("Message", "", inputWidth, nil, nil)
+// 	form.AddInputField("Wallet Name", "", inputWidth, nil, nil)
+// 	form.AddInputField("Message", "", inputWidth, nil, nil)
 
-	form.AddCheckbox(ui.cfg.Me.Nick, true, nil)
-	for _, p := range participants {
-		form.AddCheckbox(p.Nick, false, nil)
-	}
+// 	form.AddCheckbox(ui.cfg.Me.Nick, true, nil)
+// 	for _, p := range participants {
+// 		form.AddCheckbox(p.Nick, false, nil)
+// 	}
 
-	form.AddButton("Sign", func() {
-		keyname := form.GetFormItemByLabel("Wallet Name").(*tview.InputField).GetText()
-		message := form.GetFormItemByLabel("Message").(*tview.InputField).GetText()
-		msk := ui.cfg.FindWallet(keyname)
-		// Always include ourselves
-		signers := []user.User{ui.cfg.Me.User}
-		for _, p := range participants {
-			cb := form.GetFormItemByLabel(p.Nick).(*tview.Checkbox)
-			if cb.IsChecked() {
-				signers = append(signers, p.User)
-			}
-		}
+// 	form.AddButton("Sign", func() {
+// 		keyname := form.GetFormItemByLabel("Wallet Name").(*tview.InputField).GetText()
+// 		message := form.GetFormItemByLabel("Message").(*tview.InputField).GetText()
+// 		msk := ui.cfg.FindWallet(keyname)
+// 		// Always include ourselves
+// 		signers := []user.User{ui.cfg.Me.User}
+// 		for _, p := range participants {
+// 			cb := form.GetFormItemByLabel(p.Nick).(*tview.Checkbox)
+// 			if cb.IsChecked() {
+// 				signers = append(signers, p.User)
+// 			}
+// 		}
 
-		if len(signers) <= msk.Threshold {
-			ui.message(fmt.Sprintf("Wallet threshold requires at least %v signers", msk.Threshold+1), "OK", "main", nil)
-			return
-		}
+// 		if len(signers) <= msk.Threshold {
+// 			ui.message(fmt.Sprintf("Wallet threshold requires at least %v signers", msk.Threshold+1), "OK", "main", nil)
+// 			return
+// 		}
 
-		go ui.signMsg(keyname, message, signers)
+// 		//go ui.signMsg(keyname, message, signers)
 
-		ui.pages.RemovePage("form").ShowPage("main")
-	})
+// 		ui.pages.RemovePage("form").ShowPage("main")
+// 	})
 
-	form.AddButton("Cancel", func() {
-		ui.pages.RemovePage("form").ShowPage("main")
-	})
+// 	form.AddButton("Cancel", func() {
+// 		ui.pages.RemovePage("form").ShowPage("main")
+// 	})
 
-	ui.pages.AddAndSwitchToPage("form", ui.modal(form, 80, 29), true).ShowPage("main")
-}
+// 	ui.pages.AddAndSwitchToPage("form", ui.modal(form, 80, 29), true).ShowPage("main")
+// }
 
-func (ui *UI) signMsg(keyname string, message string, signers []user.User) {
-	othernicks := []string{}
-	for _, s := range signers {
-		if s.Nick != ui.cfg.Me.Nick {
-			othernicks = append(othernicks, s.Nick)
-		}
-	}
-	ui.MsgInputs <- fmt.Sprintf("%s wants %s to sign a message with wallet %s: '%s' ", ui.cfg.Me.Nick, strings.Join(othernicks, ","), keyname, message)
+// func (ui *UI) signMsg(keyname string, message string, signers []user.User) {
+// 	othernicks := []string{}
+// 	for _, s := range signers {
+// 		if s.Nick != ui.cfg.Me.Nick {
+// 			othernicks = append(othernicks, s.Nick)
+// 		}
+// 	}
+// 	ui.MsgInputs <- fmt.Sprintf("%s wants %s to sign a message with wallet %s: '%s' ", ui.cfg.Me.Nick, strings.Join(othernicks, ","), keyname, message)
 
-	ui.OutboundChat <- chatmessage{
-		Type:       messageTypeStartSign,
-		SenderName: ui.cfg.Me.Nick,
-		StartSign: startsigncmd{
-			Name:    keyname,
-			Message: message,
-			Signers: signers,
-		},
-	}
+// 	ui.OutboundChat <- chatmessage{
+// 		Type:       messageTypeStartSign,
+// 		SenderName: ui.cfg.Me.Nick,
+// 		StartSign: startsigncmd{
+// 			Name:    keyname,
+// 			Message: message,
+// 			Signers: signers,
+// 		},
+// 	}
 
-	msghash := utils.DigestAvaMsg(message)
-	avasig := ui.runProtocolSign(keyname, msghash, signers)
-	avasigcb58, _ := formatting.EncodeWithChecksum(formatting.CB58, avasig)
-	ui.MsgInputs <- "Message sucessfully signed!"
-	ui.MsgInputs <- fmt.Sprintf("Sig(cb58): %s", avasigcb58)
-}
+// 	msghash := utils.DigestAvaMsg(message)
+// 	avasig := ui.runProtocolSign(keyname, msghash, signers)
+// 	avasigcb58, _ := formatting.EncodeWithChecksum(formatting.CB58, avasig)
+// 	ui.MsgInputs <- "Message sucessfully signed!"
+// 	ui.MsgInputs <- fmt.Sprintf("Sig(cb58): %s", avasigcb58)
+// }
 
 // Show the Send a TX form UI
 func (ui *UI) sendTxForm() {
@@ -455,7 +449,7 @@ func (ui *UI) sendTxForm() {
 
 		ui.MsgInputs <- fmt.Sprintf("%s wants %s to send %f AVAX from wallet %s to destination address %s", ui.cfg.Me.Nick, strings.Join(othernicks, ","), amt, walletname, destaddr)
 
-		amt64 := uint64(amt * float64(units.Avax))
+		amt64 := uint64(amt)
 
 		go ui.sendTx(walletname, destaddr, amt64, memo, signers)
 
@@ -471,7 +465,6 @@ func (ui *UI) sendTxForm() {
 
 // Construct a Tx, and run the SendTx multi-party protocol.
 // Also notifies other signers to contruct the Tx and start the protocol.
-// TODO support other assetids besides AVAX duh
 func (ui *UI) sendTx(walletname string, destaddr string, amount uint64, memo string, signers []user.User) {
 	othernicks := []string{}
 	for _, s := range signers {
@@ -480,8 +473,7 @@ func (ui *UI) sendTx(walletname string, destaddr string, amount uint64, memo str
 		}
 	}
 
-	// TODO is division the best way to do this?
-	amtDisplay := float64(amount) / float64(units.Avax)
+	amtDisplay := float64(amount) /// float64(units.Avax)
 
 	ui.MsgInputs <- fmt.Sprintf("%s wants %s to send %f AVAX from wallet %s to destination address %s", ui.cfg.Me.Nick, strings.Join(othernicks, ","), amtDisplay, walletname, destaddr)
 
@@ -578,50 +570,50 @@ func (ui *UI) startEventHandler() {
 					hash := utils.DigestAvaMsg(msg.StartSign.Message)
 					go ui.runProtocolSign(msg.StartSign.Name, hash, msg.StartSign.Signers)
 				})
-			case messageTypeStartSendTx:
-				othernicks := []string{}
-				for _, s := range msg.StartSendTx.Signers {
-					if s.Nick != ui.cfg.Me.Nick {
-						othernicks = append(othernicks, s.Nick)
-					}
-				}
+			// case messageTypeStartSendTx:
+			// 	othernicks := []string{}
+			// 	for _, s := range msg.StartSendTx.Signers {
+			// 		if s.Nick != ui.cfg.Me.Nick {
+			// 			othernicks = append(othernicks, s.Nick)
+			// 		}
+			// 	}
 
-				// TODO is division the best way to do this?
-				amtDisplay := float64(msg.StartSendTx.Amount) / float64(units.Avax)
-				confirmMsg := fmt.Sprintf("%s wants %s to send %v AVAX to address %s", msg.SenderName, strings.Join(othernicks, ","), amtDisplay, msg.StartSendTx.DestAddr)
-				if msg.StartSendTx.Memo != "" {
-					confirmMsg = fmt.Sprintf("%s with memo %s", confirmMsg, msg.StartSendTx.Memo)
-				}
-				log.Println(confirmMsg)
-				ui.confirm(confirmMsg, "Sign!", "main", func() {
+			// 	// TODO is division the best way to do this?
+			// 	amtDisplay := float64(msg.StartSendTx.Amount) / float64(units.Avax)
+			// 	confirmMsg := fmt.Sprintf("%s wants %s to send %v AVAX to address %s", msg.SenderName, strings.Join(othernicks, ","), amtDisplay, msg.StartSendTx.DestAddr)
+			// 	if msg.StartSendTx.Memo != "" {
+			// 		confirmMsg = fmt.Sprintf("%s with memo %s", confirmMsg, msg.StartSendTx.Memo)
+			// 	}
+			// 	log.Println(confirmMsg)
+			// 	ui.confirm(confirmMsg, "Sign!", "main", func() {
 
-					w := ui.cfg.FindWallet(msg.StartSendTx.Name)
-					err := w.FetchUTXOs()
-					if err != nil {
-						ui.MsgInputs <- fmt.Sprintf("Error fetching wallet balance %v", err)
-					}
+			// 		w := ui.cfg.FindWallet(msg.StartSendTx.Name)
+			// 		err := w.FetchUTXOs()
+			// 		if err != nil {
+			// 			ui.MsgInputs <- fmt.Sprintf("Error fetching wallet balance %v", err)
+			// 		}
 
-					_, _, b, err := formatting.ParseAddress(msg.StartSendTx.DestAddr)
-					if err != nil {
-						ui.MsgInputs <- fmt.Sprintf("Error parsing dest addr %s: %v", msg.StartSendTx.DestAddr, err)
-					}
-					destid, err := ids.ToShortID(b)
-					if err != nil {
-						ui.MsgInputs <- fmt.Sprintf("Error parsing dest addr to id %s: %v", msg.StartSendTx.DestAddr, err)
-					}
+			// 		_, _, b, err := formatting.ParseAddress(msg.StartSendTx.DestAddr)
+			// 		if err != nil {
+			// 			ui.MsgInputs <- fmt.Sprintf("Error parsing dest addr %s: %v", msg.StartSendTx.DestAddr, err)
+			// 		}
+			// 		destid, err := ids.ToShortID(b)
+			// 		if err != nil {
+			// 			ui.MsgInputs <- fmt.Sprintf("Error parsing dest addr to id %s: %v", msg.StartSendTx.DestAddr, err)
+			// 		}
 
-					tx, err := w.CreateTx(w.Config.AssetID, msg.StartSendTx.Amount, destid, msg.StartSendTx.Memo)
-					if err != nil {
-						ui.MsgInputs <- fmt.Sprintf("Error CreateTx %v", err)
-					}
-					unsignedBytes, err := w.GetUnsignedBytes(&tx.UnsignedTx)
-					if err != nil {
-						ui.MsgInputs <- fmt.Sprintf("Error GetUnsignedBytes %v", err)
-					}
-					msgHash := hashing.ComputeHash256(unsignedBytes)
+			// 		tx, err := w.CreateTx(w.Config.AssetID, msg.StartSendTx.Amount, destid, msg.StartSendTx.Memo)
+			// 		if err != nil {
+			// 			ui.MsgInputs <- fmt.Sprintf("Error CreateTx %v", err)
+			// 		}
+			// 		unsignedBytes, err := w.GetUnsignedBytes(&tx.UnsignedTx)
+			// 		if err != nil {
+			// 			ui.MsgInputs <- fmt.Sprintf("Error GetUnsignedBytes %v", err)
+			// 		}
+			// 		msgHash := hashing.ComputeHash256(unsignedBytes)
 
-					go ui.runProtocolSign(msg.StartSendTx.Name, msgHash, msg.StartSendTx.Signers)
-				})
+			// 		go ui.runProtocolSign(msg.StartSendTx.Name, msgHash, msg.StartSendTx.Signers)
+			// 	})
 			}
 		case log := <-ui.Logs:
 			ui.handleLogMessage(log)
@@ -650,8 +642,8 @@ func (ui *UI) handleCommand(cmd UICommand) {
 	case "/keygen":
 		ui.generateKeyForm()
 
-	case "/signmsg":
-		ui.signMsgForm()
+	// case "/signmsg":
+	// 	ui.signMsgForm()
 
 	case "/sendtx":
 		ui.sendTxForm()
@@ -730,8 +722,8 @@ func (ui *UI) globalKeyboardIntercept(event *tcell.EventKey) *tcell.EventKey {
 		ui.generateKeyForm()
 	case tcell.KeyF3:
 		ui.sendTxForm()
-	case tcell.KeyF4:
-		ui.signMsgForm()
+	// case tcell.KeyF4:
+		//ui.signMsgForm()
 	}
 	// if event.Key() == tcell.KeyPgUp {
 	// 	row, column := messagebox.GetScrollOffset()

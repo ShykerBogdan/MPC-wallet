@@ -5,22 +5,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"math/big"
 	"sort"
 	"sync"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/libp2p/go-libp2p-core/peer"
+	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"github.com/shykerbogdan/mpc-wallet/config"
 	"github.com/shykerbogdan/mpc-wallet/protocols"
 	"github.com/shykerbogdan/mpc-wallet/user"
-
-	"github.com/ava-labs/avalanchego/ids"
-	"github.com/ava-labs/avalanchego/utils/crypto"
-	"github.com/ava-labs/avalanchego/utils/formatting"
-	"github.com/ava-labs/avalanchego/utils/hashing"
-	"github.com/ava-labs/avalanchego/vms/avm"
-	"github.com/ava-labs/avalanchego/vms/secp256k1fx"
-	"github.com/libp2p/go-libp2p-core/peer"
-	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"github.com/taurusgroup/multi-party-sig/pkg/protocol"
 )
 
@@ -305,90 +300,51 @@ func (cr *ChatRoom) runProtocolSign(walletname string, msghash []byte, signers [
 		log.Fatalf("Error running signing protocol: %v", err)
 	}
 
-	avasig, err := wallet.MpsSigToAvaSig(msghash, sig)
+	ethsig, err := wallet.MpcSigToEthSig(msghash, sig)
 	if err != nil {
-		log.Fatalf("Error recovering avasig: %v", err)
+		log.Fatalf("Error recovering ethsig: %v", err)
 	}
 
-	return avasig
+	return ethsig
 }
 
 func (cr *ChatRoom) runProtocolSendTx(walletname string, destaddr string, amount uint64, memo string, signers []user.User) {
-	w := cr.cfg.FindWallet(walletname)
-	err := w.FetchUTXOs()
-	if err != nil {
-		cr.Logs <- chatlog{level: logLevelError, msg: fmt.Sprintf("Error fetching wallet balance %v", err)}
-		return
-	}
+	ew := cr.cfg.FindWallet(walletname)
+	//ether, err := ew.GetBalance()
 
-	_, _, b, err := formatting.ParseAddress(destaddr)
-	if err != nil {
-		cr.Logs <- chatlog{level: logLevelError, msg: fmt.Sprintf("Error parsing dest addr %s: %v", destaddr, err)}
-		return
-	}
-	destid, err := ids.ToShortID(b)
-	if err != nil {
-		cr.Logs <- chatlog{level: logLevelError, msg: fmt.Sprintf("Error parsing dest addr to id %s: %v", destaddr, err)}
-		return
-	}
-
-	tx, err := w.CreateTx(w.Config.AssetID, amount, destid, memo)
+	// if err != nil {
+	// 	cr.Logs <- chatlog{level: logLevelError, msg: fmt.Sprintf("Error fetching wallet balance %v", err)}
+	// }
+	// tx, err := ew.createNormalTransaction(to, value, []byte{}, big.NewInt(0), 0)
+	
+	ew.GetCommonAddress()
+	to := common.HexToAddress(destaddr)
+	value := *big.NewInt(int64(amount))
+	
+	tx, err := ew.CreateNormalTransaction(&to, &value, []byte{}, big.NewInt(int64(0)) , 0)
 	if err != nil {
 		cr.Logs <- chatlog{level: logLevelError, msg: fmt.Sprintf("Error CreateTx %v", err)}
-		return
 	}
+	txHash := tx.ToSignHash(ew.Config.NetworkID)
 
-	unsignedBytes, err := w.GetUnsignedBytes(&tx.UnsignedTx)
+	ethsig := cr.runProtocolSign(walletname, txHash, signers)
+
+	tx.R = new(big.Int).SetBytes(ethsig[:32])
+	tx.S = new(big.Int).SetBytes(ethsig[32:64])
+	tx.V = new(big.Int).SetBytes(ethsig[64:])
+
+	rawTx := tx.ToRawTx()
+	txID, err := ew.PublishTx(rawTx)
+
 	if err != nil {
-		cr.Logs <- chatlog{level: logLevelError, msg: fmt.Sprintf("Error GetUnsignedBytes %v", err)}
-		return
-	}
-	msgHash := hashing.ComputeHash256(unsignedBytes)
-
-	avasig := cr.runProtocolSign(walletname, msgHash, signers)
-
-	avasigcb58, _ := formatting.EncodeWithChecksum(formatting.CB58, avasig)
-	log.Printf("avasigcb58: %v", avasigcb58)
-
-	// TODO move all this into wallet
-
-	for range tx.InputUTXOs() {
-		cred := &secp256k1fx.Credential{
-			Sigs: make([][crypto.SECP256K1RSigLen]byte, 1),
-		}
-		copy(cred.Sigs[0][:], avasig)
-		tx.Creds = append(tx.Creds, &avm.FxCredential{Verifiable: cred})
-	}
-
-	signedBytes, err := w.Marshal(tx)
-	if err != nil {
-		log.Fatalf("problem marshaling transaction: %v", err)
-	}
-
-	tx.Initialize(unsignedBytes, signedBytes)
-
-	txcb58, _ := formatting.EncodeWithChecksum(formatting.CB58, tx.Bytes())
-	log.Printf("txcb58: %v", txcb58)
-	log.Print(w.FormatIssueTxAsCurl(txcb58))
-
-	txID, err := w.IssueTx(tx.Bytes())
-	if err != nil {
-		cr.Logs <- chatlog{level: logLevelError, msg: fmt.Sprintf("Error issuing tx: %s", err)}
-		return
-	}
-	cr.Logs <- chatlog{level: logLevelInfo, msg: fmt.Sprintf("Issued txid: %s", txID.String())}
-
-	result := w.ConfirmTx(txID)
-	url := w.FormatTxURL(txID)
-
-	if result {
-		msg := fmt.Sprintf("[blue]🎉 Transaction Confirmed![-] %s", url)
+		msg := fmt.Sprintf("[red]😱 Transaction Failed!")
 		cr.Logs <- chatlog{level: logLevelInfo, msg: msg}
 		cr.OutboundChat <- chatmessage{Type: messageTypeChatMessage, SenderName: cr.cfg.Me.Nick, UserMessage: msg}
 	} else {
-		msg := fmt.Sprintf("[red]😱 Transaction did not confirm![-] %s", url)
-		cr.Logs <- chatlog{level: logLevelError, msg: msg}
-		cr.OutboundChat <- chatmessage{Type: messageTypeChatMessage, SenderName: cr.cfg.Me.Nick, UserMessage: msg}
+		scannerURL := ew.ConstructEtherscanUrl(ew.Config.NetworkName, txID)
+		msg := fmt.Sprintf("[blue]🎉 Transaction Confirmed![-] %s", scannerURL)
+			cr.Logs <- chatlog{level: logLevelInfo, msg: msg}
+			cr.OutboundChat <- chatmessage{Type: messageTypeChatMessage, SenderName: cr.cfg.Me.Nick, UserMessage: msg}
 	}
 }
 
@@ -480,3 +436,4 @@ func (cr *ChatRoom) refreshParticipantsLoop() {
 		}()
 	}
 }
+

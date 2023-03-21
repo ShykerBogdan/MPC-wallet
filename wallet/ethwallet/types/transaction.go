@@ -98,7 +98,7 @@ func (t *Transaction) ToByteArray() (res [][]byte) {
 	)
 }
 
-func (t *Transaction) ToSignHash(network *Network) (res []byte) {
+func (t *Transaction) ToSignHash(chainId byte) (res []byte) {
 	tx := utils.ConcatToArray(
 		utils.Uint64ToBytes(t.Nonce),
 		t.GasPrice.Bytes(),
@@ -106,7 +106,7 @@ func (t *Transaction) ToSignHash(network *Network) (res []byte) {
 		t.To.Bytes(),
 		t.Value.Bytes(),
 		t.Data,
-		[]byte{network.ChainId},
+		[]byte{chainId},
 		[]byte{},
 		[]byte{},
 	)
