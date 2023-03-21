@@ -13,6 +13,8 @@ import (
 	"time"
 
 	secp256k1 "github.com/decred/dcrd/dcrec/secp256k1/v3"
+	
+    secp256k1Eth "github.com/ethereum/go-ethereum/crypto/secp256k1"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/shykerbogdan/mpc-wallet/constants"
 	"github.com/shykerbogdan/mpc-wallet/user"
@@ -54,9 +56,12 @@ type Wallet struct {
 
 	// Set of unique asset ids contained in the utxos
 	assets     map[string]Asset
+
 	conn       *conn.EthConn
+
 	erc20List  []*types.Erc20Token
 	Key        *ethcrypto.Key
+
 	isFetching bool
 	mutex      sync.Mutex
 }
@@ -152,14 +157,13 @@ func (w *Wallet) AllPartyNicks() []string {
 	return list
 }
 
-// Unmarshal the MPS config which contains the key data
+// Unmarshal the MPC config which contains the key data
 func (w *Wallet) GetUnwrappedKeyData() mpsconfig.Config {
-	// TODO cache this
 	c := mpsconfig.EmptyConfig(curve.Secp256k1{})
 	err := cbor.Unmarshal(w.KeyData, c)
 	if err != nil {
 		log.Fatalf("GetUnwrappedKeyData error %v", err)
-	} //TODO
+	} 
 	return *c
 }
 
@@ -169,14 +173,14 @@ func (w *Wallet) PublicKeyEth() stdecdsa.PublicKey {
 	ppb, err := kd.PublicPoint().MarshalBinary()
 	if err != nil {
 		panic(err)
-	} //TODO
+	} 
 
 	key, err := secp256k1.ParsePubKey(ppb)
 	ecdsakey := key.ToECDSA()
 
 	if err != nil {
 		panic(err)
-	} //TODO
+	} 
 
 	return *ecdsakey
 }
@@ -201,13 +205,17 @@ func (w *Wallet) clearBalances() {
 	w.balance = *big.NewInt(0)
 }
 
-// Is the wallet querying the network for UTXOs
 func (w *Wallet) IsFetching() bool {
 	return w.isFetching
 }
 
 // Run in a Go routine, as well as called directly
 func (ew *Wallet) FetchBalance() error {
+	ew.mutex.Lock()
+	ew.isFetching = true
+	defer ew.doneFetching()
+	defer ew.mutex.Unlock()	
+
 	balance, err := ew.conn.GetBalance(ew.GetCommonAddress())
 	ew.balance = *balance
 
@@ -226,15 +234,6 @@ func (w *Wallet) Balance() uint64 {
 	return w.balance.Uint64()
 }
 
-// func (w *Wallet) GetBalances() Int {
-// 	balance, err := w.conn.GetBalance(w.GetCommonAddress())
-// 	if err != nil {
-// 		return *big.NewInt(0)
-// 	}
-// 	return *balance
-// }
-
-// Balance returns the amount of the assets in this wallet in units of AVAX
 func (w *Wallet) BalanceForDisplay(assetID string) string {
 	if w.IsFetching() {
 		return "<fetching balance>"
@@ -307,12 +306,30 @@ func (w *Wallet) MpcSigToEthSig(hashedmsg []byte, mpcsig *mpsecdsa.Signature) ([
 		return []byte{}, err
 	}
 
-	// Eth sig is r | s | v  where v is used to encode the recovery ID
-	var sigeth [65]byte
-	copy(sigeth[0:32], rb[0:32])
-	copy(sigeth[32:64], sb[0:32])
-	copy(sigeth[64:], []byte{sigeth[64] + 35 + w.Config.NetworkID*2})
-	return sigeth[:], nil
+	rs := append(rb, sb...)
+	v, err := secp256k1Eth.RecoverPubkey(hashedmsg, rs)
+
+	 
+    // Convert V to an Ethereum-compatible format
+    if v[31] == 0 {
+        v[31] = 27
+    } else if v[31] == 1 {
+        v[31] = 28
+    } else {
+        v[31] += 4
+    }
+    
+    // Concatenate R, S, and V into a single slice in Ethereum format
+    ethSig := append(rs, v[31])
+
+	return ethSig, nil
+
+	// // Eth sig is r | s | v  where v is used to encode the recovery ID
+	// var sigeth [65]byte
+	// copy(sigeth[0:32], rb[0:32])
+	// copy(sigeth[32:64], sb[0:32])
+	// copy(sigeth[64:], []byte{sigeth[64] + 35 + w.Config.NetworkID*2})
+	// return sigeth[:], nil
 }
 
 func CheckValueEnough(value *big.Int, gasPrice *big.Int, gasLimit uint64, ether *big.Int) bool {
