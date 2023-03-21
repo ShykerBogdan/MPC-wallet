@@ -42,7 +42,7 @@ var errUnsupportedBlockchain = errors.New("Blockchain/Network is unsupported")
 
 // Create a new AppConfig
 func New(blockchain string, network string, project string, nick string, address string) (*AppConfig, error) {
-	if (blockchain != "avalanche") || (network != "mainnet" && network != "fuji") {
+	if (blockchain != "goerli") || (network != "mainnet" && network != "fuji") {
 		return nil, errUnsupportedBlockchain
 	}
 
@@ -144,7 +144,7 @@ func (ac *AppConfig) Persist() {
 	ac.isLoaded = true
 }
 
-// Create a new empty wallet which will hold a multisig key after the multi-party keygen protocol has been completed
+// Create a new empty wallet which will hold a mpc share after the multi-party keygen protocol has been completed
 func (ac *AppConfig) NewEmptyWallet(name string, threshold int, signers []user.User) *ethwallet.Wallet {
 	others := []user.User{}
 	for _, u := range signers {

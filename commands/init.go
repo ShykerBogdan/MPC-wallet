@@ -14,11 +14,11 @@ func initCommand() *cobra.Command {
 		Short: "Initialize a new project config (default filename is ./[project]-[nick].json)",
 		Long: `Initialize a new config for a project. 
 
-blockchain: Only 'avalanche' is supported currently
+blockchain: Only 'goerli' is supported currently
 network:    'mainnet' or 'fuji'
 project:    The name of your project, e.g. 'DAOTreasury'
 nick:       Your nickname in the chat, e.g. 'PrezCamacho'
-address:    Your Avalanche X chain address, e.g. X-fuji1xv3653....
+address:    Your goerli X chain address, e.g. X-fuji1xv3653....
 `,
 		Args: cobra.ExactArgs(5),
 		RunE: func(c *cobra.Command, args []string) error {

@@ -6,12 +6,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gdamore/tcell/v2"
+	"github.com/rivo/tview"
 	"github.com/shykerbogdan/mpc-wallet/network"
 	"github.com/shykerbogdan/mpc-wallet/user"
 	"github.com/shykerbogdan/mpc-wallet/utils"
 	"github.com/shykerbogdan/mpc-wallet/version"
-	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/tview"
 )
 
 var inputWidth = 70
@@ -570,50 +570,50 @@ func (ui *UI) startEventHandler() {
 					hash := utils.DigestAvaMsg(msg.StartSign.Message)
 					go ui.runProtocolSign(msg.StartSign.Name, hash, msg.StartSign.Signers)
 				})
-			// case messageTypeStartSendTx:
-			// 	othernicks := []string{}
-			// 	for _, s := range msg.StartSendTx.Signers {
-			// 		if s.Nick != ui.cfg.Me.Nick {
-			// 			othernicks = append(othernicks, s.Nick)
-			// 		}
-			// 	}
+				// case messageTypeStartSendTx:
+				// 	othernicks := []string{}
+				// 	for _, s := range msg.StartSendTx.Signers {
+				// 		if s.Nick != ui.cfg.Me.Nick {
+				// 			othernicks = append(othernicks, s.Nick)
+				// 		}
+				// 	}
 
-			// 	// TODO is division the best way to do this?
-			// 	amtDisplay := float64(msg.StartSendTx.Amount) / float64(units.Avax)
-			// 	confirmMsg := fmt.Sprintf("%s wants %s to send %v AVAX to address %s", msg.SenderName, strings.Join(othernicks, ","), amtDisplay, msg.StartSendTx.DestAddr)
-			// 	if msg.StartSendTx.Memo != "" {
-			// 		confirmMsg = fmt.Sprintf("%s with memo %s", confirmMsg, msg.StartSendTx.Memo)
-			// 	}
-			// 	log.Println(confirmMsg)
-			// 	ui.confirm(confirmMsg, "Sign!", "main", func() {
+				// 	// TODO is division the best way to do this?
+				// 	amtDisplay := float64(msg.StartSendTx.Amount) / float64(units.Avax)
+				// 	confirmMsg := fmt.Sprintf("%s wants %s to send %v AVAX to address %s", msg.SenderName, strings.Join(othernicks, ","), amtDisplay, msg.StartSendTx.DestAddr)
+				// 	if msg.StartSendTx.Memo != "" {
+				// 		confirmMsg = fmt.Sprintf("%s with memo %s", confirmMsg, msg.StartSendTx.Memo)
+				// 	}
+				// 	log.Println(confirmMsg)
+				// 	ui.confirm(confirmMsg, "Sign!", "main", func() {
 
-			// 		w := ui.cfg.FindWallet(msg.StartSendTx.Name)
-			// 		err := w.FetchUTXOs()
-			// 		if err != nil {
-			// 			ui.MsgInputs <- fmt.Sprintf("Error fetching wallet balance %v", err)
-			// 		}
+				// 		w := ui.cfg.FindWallet(msg.StartSendTx.Name)
+				// 		err := w.FetchUTXOs()
+				// 		if err != nil {
+				// 			ui.MsgInputs <- fmt.Sprintf("Error fetching wallet balance %v", err)
+				// 		}
 
-			// 		_, _, b, err := formatting.ParseAddress(msg.StartSendTx.DestAddr)
-			// 		if err != nil {
-			// 			ui.MsgInputs <- fmt.Sprintf("Error parsing dest addr %s: %v", msg.StartSendTx.DestAddr, err)
-			// 		}
-			// 		destid, err := ids.ToShortID(b)
-			// 		if err != nil {
-			// 			ui.MsgInputs <- fmt.Sprintf("Error parsing dest addr to id %s: %v", msg.StartSendTx.DestAddr, err)
-			// 		}
+				// 		_, _, b, err := formatting.ParseAddress(msg.StartSendTx.DestAddr)
+				// 		if err != nil {
+				// 			ui.MsgInputs <- fmt.Sprintf("Error parsing dest addr %s: %v", msg.StartSendTx.DestAddr, err)
+				// 		}
+				// 		destid, err := ids.ToShortID(b)
+				// 		if err != nil {
+				// 			ui.MsgInputs <- fmt.Sprintf("Error parsing dest addr to id %s: %v", msg.StartSendTx.DestAddr, err)
+				// 		}
 
-			// 		tx, err := w.CreateTx(w.Config.AssetID, msg.StartSendTx.Amount, destid, msg.StartSendTx.Memo)
-			// 		if err != nil {
-			// 			ui.MsgInputs <- fmt.Sprintf("Error CreateTx %v", err)
-			// 		}
-			// 		unsignedBytes, err := w.GetUnsignedBytes(&tx.UnsignedTx)
-			// 		if err != nil {
-			// 			ui.MsgInputs <- fmt.Sprintf("Error GetUnsignedBytes %v", err)
-			// 		}
-			// 		msgHash := hashing.ComputeHash256(unsignedBytes)
+				// 		tx, err := w.CreateTx(w.Config.AssetID, msg.StartSendTx.Amount, destid, msg.StartSendTx.Memo)
+				// 		if err != nil {
+				// 			ui.MsgInputs <- fmt.Sprintf("Error CreateTx %v", err)
+				// 		}
+				// 		unsignedBytes, err := w.GetUnsignedBytes(&tx.UnsignedTx)
+				// 		if err != nil {
+				// 			ui.MsgInputs <- fmt.Sprintf("Error GetUnsignedBytes %v", err)
+				// 		}
+				// 		msgHash := hashing.ComputeHash256(unsignedBytes)
 
-			// 		go ui.runProtocolSign(msg.StartSendTx.Name, msgHash, msg.StartSendTx.Signers)
-			// 	})
+				// 		go ui.runProtocolSign(msg.StartSendTx.Name, msgHash, msg.StartSendTx.Signers)
+				// 	})
 			}
 		case log := <-ui.Logs:
 			ui.handleLogMessage(log)
@@ -705,7 +705,7 @@ func (ui *UI) syncWallets() {
 func (ui *UI) fetchWalletBalances() {
 	for _, n := range ui.cfg.SortedWalletNames() {
 		w := ui.cfg.FindWallet(n)
-		go w.FetchUTXOs()
+		go w.FetchBalance()
 	}
 }
 
@@ -722,7 +722,7 @@ func (ui *UI) globalKeyboardIntercept(event *tcell.EventKey) *tcell.EventKey {
 		ui.generateKeyForm()
 	case tcell.KeyF3:
 		ui.sendTxForm()
-	// case tcell.KeyF4:
+		// case tcell.KeyF4:
 		//ui.signMsgForm()
 	}
 	// if event.Key() == tcell.KeyPgUp {

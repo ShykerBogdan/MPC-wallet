@@ -23,11 +23,11 @@ clean:
 ui: 
 	bin/thresher --config alice.json testui
 
-# Initialize alice, bob, and cam as users with Avalanche Fuji addresses.
+# Initialize alice, bob, and cam as users.
 initusers:
-	bin/thresher init avalanche fuji DAO-Treasury alice X-fuji1knjauvyjxf56tavysqnf9zxds084588nqja7j4
-	bin/thresher init avalanche fuji DAO-Treasury bob X-fuji1uehmke49qtysde4p2ehvnpvp7sc6j8xdntrma0
-	bin/thresher init avalanche fuji DAO-Treasury cam X-fuji13avtfecrzkhxrd8mxqcd0ehctsvqh99y6xjnr2
+	bin/thresher init goerli fuji DAO-Treasury alice 
+	bin/thresher init goerli fuji DAO-Treasury bob 
+	bin/thresher init goerli fuji DAO-Treasury cam 
 
 alice:
 	bin/thresher --config DAO-Treasury-alice.json --log alice.log wallet

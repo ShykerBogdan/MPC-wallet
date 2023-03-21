@@ -15,8 +15,6 @@ import (
 	"regexp"
 	"runtime"
 
-	avacrypto "github.com/ava-labs/avalanchego/utils/crypto"
-	"github.com/ava-labs/avalanchego/utils/formatting"
 	"github.com/davecgh/go-spew/spew"
 	mpsecdsa "github.com/taurusgroup/multi-party-sig/pkg/ecdsa"
 )
@@ -146,20 +144,6 @@ func DigestAvaMsg(msg string) []byte {
 	fullmsg := buf.Bytes()
 	h := sha256.Sum256(fullmsg)
 	return h[:]
-}
-
-// Validate a msg signed with the Avalanche web wallet "Sign Message" feature
-func PublicKeyFromAvaMsg(msg string, avasigcb58 string) (avacrypto.PublicKey, error) {
-	h := DigestAvaMsg(msg)
-
-	avasig, err := formatting.Decode(formatting.CB58, avasigcb58)
-	if err != nil {
-		return nil, err
-	}
-
-	f := avacrypto.FactorySECP256K1R{}
-	pk, err := f.RecoverHashPublicKey(h, avasig)
-	return pk, err
 }
 
 // Useful for using standard ecdsa funcs that require int args
