@@ -311,12 +311,12 @@ func (w *Wallet) MpcSigToEthSig(hashedmsg []byte, mpcsig *mpsecdsa.Signature) ([
 
 	 
     // Convert V to an Ethereum-compatible format
-    if v[31] == 0 {
-        v[31] = 27
+	if v[31] == 0 {
+        v[31] += w.Config.NetworkID * 2 + 35 
     } else if v[31] == 1 {
-        v[31] = 28
+        v[31] += w.Config.NetworkID * 2 + 35
     } else {
-        v[31] += 4
+        v[31] += w.Config.NetworkID *2 + 4
     }
     
     // Concatenate R, S, and V into a single slice in Ethereum format

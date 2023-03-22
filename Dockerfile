@@ -1,8 +1,8 @@
-FROM golang:1.17-alpine
+FROM golang
 
 WORKDIR /app
 
-RUN apk add --no-cache git
+#RUN apk add --no-cache git
 
 # copy directory files i.e all files ending with .go
 COPY . ./
