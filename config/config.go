@@ -42,7 +42,7 @@ var errUnsupportedBlockchain = errors.New("Blockchain/Network is unsupported")
 
 // Create a new AppConfig
 func New(blockchain string, network string, project string, nick string, address string) (*AppConfig, error) {
-	if (blockchain != "goerli") || (network != "mainnet" && network != "fuji") {
+	if (blockchain != "ethereum") || (network != "mainnet" && network != "goerli") {
 		return nil, errUnsupportedBlockchain
 	}
 

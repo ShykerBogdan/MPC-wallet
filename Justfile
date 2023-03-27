@@ -25,9 +25,9 @@ ui:
 
 # Initialize alice, bob, and cam as users.
 initusers:
-	bin/thresher init goerli fuji DAO-Treasury alice cc3412da-0240-4b3a-8c98-557ee614ded2
-	bin/thresher init goerli fuji DAO-Treasury bob be211327-d388-4ba2-8a7d-6c7be21d3c72
-	bin/thresher init goerli fuji DAO-Treasury cam ac6c532b-941a-4328-8896-bb85805c1ccc
+	bin/thresher init ethereum goerli DAO-Treasury alice cc3412da-0240-4b3a-8c98-557ee614ded2
+	bin/thresher init ethereum goerli DAO-Treasury bob be211327-d388-4ba2-8a7d-6c7be21d3c72
+	bin/thresher init ethereum goerli DAO-Treasury cam ac6c532b-941a-4328-8896-bb85805c1ccc
 
 alice:
 	bin/thresher --config DAO-Treasury-alice.json --log alice.log wallet
