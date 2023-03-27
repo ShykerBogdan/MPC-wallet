@@ -1,9 +1,9 @@
-FROM golang
+FROM golang:1.17-alpine
 
 WORKDIR /app
 
-#RUN apk add --no-cache git
-
+RUN apk add --no-cache git
+RUN apk add build-base
 # copy directory files i.e all files ending with .go
 COPY . ./
 
