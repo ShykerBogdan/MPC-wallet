@@ -216,7 +216,11 @@ func (ew *Wallet) FetchBalance() error {
 	defer ew.doneFetching()
 	defer ew.mutex.Unlock()	
 
-	balance, err := ew.conn.GetBalance(ew.GetCommonAddress())
+	commonAddress := ew.GetCommonAddress()
+	stringadd:= commonAddress.String()
+	fmt.Errorf("Common address was : %s", stringadd)
+
+	balance, err := ew.conn.GetBalance(commonAddress)
 	ew.balance = *balance
 
 	if err != nil {

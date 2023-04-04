@@ -447,7 +447,7 @@ func (ui *UI) sendTxForm() {
 			return
 		}
 
-		ui.MsgInputs <- fmt.Sprintf("%s wants %s to send %f AVAX from wallet %s to destination address %s", ui.cfg.Me.Nick, strings.Join(othernicks, ","), amt, walletname, destaddr)
+		ui.MsgInputs <- fmt.Sprintf("%s wants %s to send %f Ether from wallet %s to destination address %s", ui.cfg.Me.Nick, strings.Join(othernicks, ","), amt, walletname, destaddr)
 
 		amt64 := uint64(amt)
 
@@ -475,7 +475,7 @@ func (ui *UI) sendTx(walletname string, destaddr string, amount uint64, memo str
 
 	amtDisplay := float64(amount) /// float64(units.Avax)
 
-	ui.MsgInputs <- fmt.Sprintf("%s wants %s to send %f AVAX from wallet %s to destination address %s", ui.cfg.Me.Nick, strings.Join(othernicks, ","), amtDisplay, walletname, destaddr)
+	ui.MsgInputs <- fmt.Sprintf("%s wants %s to send %f Ether from wallet %s to destination address %s", ui.cfg.Me.Nick, strings.Join(othernicks, ","), amtDisplay, walletname, destaddr)
 
 	ui.OutboundChat <- chatmessage{
 		Type:       messageTypeStartSendTx,
@@ -625,7 +625,7 @@ func (ui *UI) startEventHandler() {
 			ui.TerminalApp.Draw()
 
 		case <-fetchticker.C:
-			ui.fetchWalletBalances()
+		//	ui.fetchWalletBalances()
 
 		case <-ui.psctx.Done():
 			return
@@ -697,7 +697,7 @@ func (ui *UI) syncWallets() {
 		bal := w.BalanceForDisplay(w.Config.AssetID)
 		fmt.Fprintf(
 			ui.keyBox,
-			"[blue]<%s>[-]\n[yellow]%s[-]\n[white]Balance:[-] [green]%s[-] [white]AVAX[-]\n[grey]Signers: %s (%d of %d)\n",
+			"[blue]<%s>[-]\n[yellow]%s[-]\n[white]Balance:[-] [green]%s[-] [white] Ether[-]\n[grey]Signers: %s (%d of %d)\n",
 			w.Name, w.Address, bal, signers, m, n)
 	}
 }

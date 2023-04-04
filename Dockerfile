@@ -1,5 +1,4 @@
-FROM golang:1.17-alpine
-
+FROM golang:1.17.13-alpine3.16
 WORKDIR /app
 
 RUN apk add --no-cache git

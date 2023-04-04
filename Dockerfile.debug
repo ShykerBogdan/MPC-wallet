@@ -1,0 +1,22 @@
+FROM golang:1.17.13-alpine3.16
+
+RUN apk add --no-cache git build-base
+WORKDIR /app
+
+ENV GOPRIVATE=github.com/shykerbogdan/mpc-wallet
+RUN go get github.com/shykerbogdan/mpc-wallet/commands
+RUN go get github.com/shykerbogdan/mpc-wallet/ulimit
+RUN go get github.com/shykerbogdan/mpc-wallet/version
+
+COPY . .
+
+RUN go mod tidy
+
+RUN CGO_ENABLED=0 go install -ldflags "-s -w -extldflags '-static'" github.com/go-delve/delve/cmd/dlv@latest
+
+ENV GO111MODULE=auto 
+RUN CGO_ENABLED=0 go build -tags secp256k1 -gcflags "all=-N -l=1" -o bin/thresher main.go
+
+CMD tail -f /dev/null
+
+EXPOSE 80 4000
